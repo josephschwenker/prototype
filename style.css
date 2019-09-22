@@ -1,0 +1,68 @@
+@font-face {
+	font-family: Chicago;
+	src: url(ChicagoFLF.ttf);
+}
+
+* {
+	font-family: Chicago;
+	font-size: 12px;
+}
+
+body {
+	height: 100vh;
+}
+
+#map {
+	display: inline-block;
+	position: relative;
+	left: 10vw;
+	transform:  scaleY(0.5) rotate(45deg);
+}
+
+#baseControl {
+	display: none;
+}
+
+progress {
+	width: 100%;
+}
+
+.row {
+	display: flex;
+}
+
+.tile {
+	--tile-size: 100px;
+	--border-style: solid rgba(255, 255, 255, 0.5) 1px;
+	border-top: var(--border-style);
+	border-left: var(--border-style);
+	width: var(--tile-size);
+	height: var(--tile-size);
+	display: flex;
+	flex-direction: column;
+	position: relative;
+	align-items: center;
+	justify-content: center;
+}
+
+.openOcean {
+	background-image: url(openOcean.png);
+}
+
+.unit, .city, .resourceLabel {
+	transform: rotate(-45deg) scaleY(2);
+	position: absolute;
+	z-index: 1;
+}
+
+.resourceLabel {
+	color: white;
+	background: black;
+}
+
+button {
+	border-radius: 3px;
+	border: solid 1px black;
+	background: lightgray;
+	box-shadow: 0 1px white inset;
+}

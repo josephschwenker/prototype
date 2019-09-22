@@ -1,0 +1,5 @@
+TODO
+	Implement facility construction
+	Implement unit construction
+	Implement resource stockpiles
+	Transition to "use strict;"

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Aquaformer</title>
+		<meta charset="utf-8">
+		<link rel="stylesheet" href="style.css">
+	</head>
+	<body>
+		<div id="map">
+			
+		</div>
+		<div id="baseControl">
+			<fieldset>
+				<legend id="cityName"></legend>
+				<div>Nutrients: <span id="food"></span></div>
+				<div>Minerals: <span id="minerals"></span></div>
+				<div>Credits: <span id="credits"></span></div>
+				<div>Production Queue</div>
+				<div>
+					<select id="productionMenu"></select>
+				</div>
+				<div>
+					<progress id="productionProgress" value="0" max="0"></progress>
+				</div>
+				<div>Facilities:</div>
+				<div id="facilitiesList"></div>
+			</fieldset>
+		</div>
+		<div id="actionBar">
+			<button id="buildCity">Build City</button>
+			<button id="disband">Disband</button>
+			<button id="endTurn">End Turn</button>
+		</div>
+		<div id="statusBar">
+			<span id="active"></span>
+			<span id="turn"></span>
+		</div>
+	</body>
+	<script src="script.js"></script>
+</html>
