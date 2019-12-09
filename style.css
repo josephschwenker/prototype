@@ -95,9 +95,40 @@ progress {
 }
 
 .unit, .city, .structure, .resourceLabel {
-	transform: rotate(-45deg) scaleY(2);
+	text-align: center;
+	transform: rotate(-45deg) scaleY(2) translateY(-25%);
 	position: absolute;
 	z-index: 1;
+}
+
+.resourceLabel {
+	z-index: 2;
+}
+
+.city, .flotationFarm, .solarArray, .unit {
+	transform: translateY(-75%) rotate(-45deg) scaleY(2) translateX(-50%);
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.city {
+	height: 100px;
+	width: 100px;
+	background-image: url(graphics/city.png);
+}
+
+.flotationFarm, .solarArray {
+	background-image: url(graphics/flotationFarm.png);
+	transform: rotate(-45deg) scaleY(2) translateY(-15%);
+	height: 40px;
+	width: 40px;
+}
+
+.unit {
+	background-image: url(graphics/U.ironclad.png);
+	height: 50px;
+	width: 50px;
 }
 
 .resourceLabel {

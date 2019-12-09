@@ -7,8 +7,11 @@ class Game {
 	set active(piece) {
 		if (piece != undefined) {
 			if (piece instanceof Unit) {
-				// this will be a unit
+				// changing to a unit
+				// update active label
 				document.getElementById("active").textContent = "Active: " + piece.constructor.fullName
+				// update moves label
+				document.getElementById("moves").textContent = "Moves: " + piece.currentMoves
 				if (this.active instanceof City) {
 					// we are switching a city to a unit, so close base control
 					closeBaseControl()
@@ -48,6 +51,20 @@ class Tuple {
 		this.z = z
 		this.y = y
 		this.x = x
+	}
+	
+	equals(tuple) {
+		if (
+			tuple instanceof Tuple &&
+			this.x == tuple.x &&
+			this.y == tuple.y &&
+			this.z == tuple.z
+		) {
+			return true;
+		}
+		else {
+			return false
+		}
 	}
 }
 
@@ -385,7 +402,7 @@ class EngineerSkimmer extends Unit {
 			var currentStructure = t.productionQueue.find( s => s instanceof structure )
 			if ( currentStructure == undefined ) {
 				// no one has started building this structure
-				var currentStructure = new structure()
+				var currentStructure = new structure( getActiveCoordinates() )
 				t.productionQueue.push( currentStructure )
 			}
 			// assign this engineer to the structure
@@ -397,10 +414,17 @@ class EngineerSkimmer extends Unit {
 		}
 	}
 	advanceTerraform = function() {
-		// only advance construction if the engineer is on the same tile as its assignment
 		if (this.assignedTo != undefined) {
-			// structure has not been completed
-			this.assignedTo.progress++
+			// structure has not been completed			
+			// only advance construction if the engineer is on the same tile as its assignment
+			if (
+				getCoordinatesByItemId(this.id).equals(
+					this.assignedTo.coordinates
+					) 
+				)
+			{
+				this.assignedTo.progress++
+			}
 			// check if this structure has been completed
 			if (this.assignedTo.progress >= this.assignedTo.constructor.buildTime) {
 				// get tile
@@ -439,29 +463,32 @@ class Tile {
 }
 
 class Structure {
-	constructor() {
+	constructor(coordinates) {
 		this.name = ""
 		this.id = nextId++
 		this.buildTime = 0
 		this.progress = 0
+		this.coordinates = coordinates
 	}
 }
 
 class FlotationFarm extends Structure {
 	static fullName = "Flotation Farm"
-	static buildTime = 3
+	static shortName = "flotationFarm"
 	static shortcut = "F"
-	constructor() {
-		super()
+	static buildTime = 3
+	constructor(coordinates) {
+		super(coordinates)
 	}
 }
 
 class SolarArray extends Structure {
 	static fullName = "Solar Array"
+	static shortName = "solarArray"
 	static buildTime = 3
 	static shortcut = "S"
-	constructor() {
-		super()
+	constructor(coordinates) {
+		super(coordinates)
 	}
 }
 
@@ -889,44 +916,44 @@ function render() {
 				target.firstElementChild.remove()
 			}
 			// Apply tile background
-			var shortName = tile.shortName
-			target.classList.add(shortName)
+			target.classList.add(tile.shortName)
 			// Render city if present
 			if (tile.city !== undefined) {
-				var button = document.createElement("button")
-				button.id = tile.city.id
-				button.textContent = tile.city.fullName
-				button.onclick = onItemSelect
-				button.className = "city"
-				target.appendChild(button)
+				var city = document.createElement("div")
+				city.id = tile.city.id
+				city.onclick = onItemSelect
+				city.className = "city"
+				target.appendChild(city)
 			}
 			// render structures if present
 			if (tile.structures.length != 0) {
 				for (var s of tile.structures) {
-					var button = document.createElement("button")
-					button.id = s.id
-					button.textContent = s.constructor.shortcut
-					button.className = "structure"
-					target.appendChild(button)
+					var structure = document.createElement("div")
+					structure.id = s.id
+					structure.classList.add("structure")
+					structure.classList.add(s.constructor.shortName)
+					target.appendChild(structure)
 				}
 			}
 			// Render units if present
 			if (tile.units.length !== 0) {
 				for (var i=0; i<tile.units.length; i++) {
 					var currentUnit = tile.units[i]
-					var button = document.createElement("button")
-					button.id = currentUnit.id
-					button.className = "unit"
-					button.textContent = currentUnit.constructor.fullName + " (" + currentUnit.currentMoves + ")"
+					var unit = document.createElement("div")
+					unit.id = currentUnit.id
+					unit.className = "unit"
+					//unit.textContent = currentUnit.constructor.fullName + " (" + currentUnit.currentMoves + ")"
 					// add status for engineers building a structure
 					if (currentUnit instanceof EngineerSkimmer && currentUnit.assignedTo != undefined) {
-						button.textContent +=
+						/*
+						unit.textContent +=
 						" (" +
 						currentUnit.assignedTo.constructor.shortcut +
 						")"
+						*/
 					}
-					button.onclick = onItemSelect
-					target.appendChild(button)
+					unit.onclick = onItemSelect
+					target.appendChild(unit)
 				}
 			}
 		}
