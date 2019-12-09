@@ -589,7 +589,7 @@ onkeydown = function(e) {
 				break
 			case "1":
 				// down left
-				game.active.moveTo(tile.z, tile.y+1, tile.x-1)
+				game.active.moveTo(tile.z, tile.y+1, tile.x)
 				break
 			case "4":
 				// left
