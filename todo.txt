@@ -1,5 +1,11 @@
 TODO
-	Implement facility construction
-	Implement unit construction
-	Implement resource stockpiles
-	Transition to "use strict;"
+	Fix Moves: N/A when switching from city to unit
+	Only allow terraforming while engineer is on the same tile it is assigned to
+	Show terraform status
+	Show list of all units with moves remaining
+	Automatically activate next unit with removes remaining
+	Population growth
+	Resource stockpiles
+	Save/restore using Game object
+	Unit designer
+	Write to filesystem

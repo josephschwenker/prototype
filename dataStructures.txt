@@ -18,12 +18,14 @@ Map []
 
 Map[z=0][y=1][x=1] = new OpenOcean()
 
-City{}
+class Piece
+
+class City extends Piece
 	name: "Alpha Prime"
 	facilities: [Recycler{}, AdministrativeNexus{}]
 	productionQueue: [BiologyLaboratory{}]
 	
-Unit{}
+class Vehicle extends Piece
 	name: "Scout Skimmer"
 	attack: 0
 	defense: 0
@@ -31,5 +33,5 @@ Unit{}
 	currentHealth: 10
 	maxHealth: 10
 	
-Facility{}
+class Facility
 	name: "Biology Lab"

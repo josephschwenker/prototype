@@ -6,10 +6,14 @@
 		<link rel="stylesheet" href="style.css">
 	</head>
 	<body>
+		<audio id="audioPieces"></audio>
+		<audio id="audioInterface"></audio>
+		<audio id="audioMusic"></audio>
 		<div id="map">
 			
 		</div>
 		<div id="baseControl">
+			<div id="closeBaseControl">x</div>
 			<fieldset>
 				<legend id="cityName"></legend>
 				<div>Nutrients: <span id="food"></span></div>
@@ -27,13 +31,17 @@
 			</fieldset>
 		</div>
 		<div id="actionBar">
-			<button id="buildCity">Build City</button>
-			<button id="disband">Disband</button>
-			<button id="endTurn">End Turn</button>
+			<button id="buildCity">Build City (B)</button>
+			<button id="disband">Disband (D)</button>
+			<button id="buildFarm">Flotation Farm (F)</button>
+			<button id="buildSolar">Solar Array (S)</button>
+			<button id="endTurn">End Turn (Enter)</button>
 		</div>
 		<div id="statusBar">
-			<span id="active"></span>
-			<span id="turn"></span>
+			<div id="active"></div>
+			<div id="moves"></div>
+			<div id="status"></div>
+			<div id="turn"></div>
 		</div>
 	</body>
 	<script src="script.js"></script>

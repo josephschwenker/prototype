@@ -1,3 +1,5 @@
+/* GLOBAL STYLES */
+
 @font-face {
 	font-family: Chicago;
 	src: url(ChicagoFLF.ttf);
@@ -6,25 +8,68 @@
 * {
 	font-family: Chicago;
 	font-size: 12px;
+	box-sizing: border-box;
 }
 
 body {
 	height: 100vh;
 }
 
+/* BASE CONTROL */
+
+#baseControl {
+	position: absolute;
+	display: none;
+	bottom: 0;
+	right: 0;
+}
+
+#closeBaseControl {
+	position: absolute;
+	right: 10px;
+	top: 0;
+	height: 24px;
+	width: 24px;
+	border: solid black 1px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: white;
+	cursor: default;
+	border-radius: 5px;
+}
+
+#cityName {
+	border: solid black 1px;
+	border-radius: 5px;
+	height: 24px;
+	width: 100%;
+	display: flex;
+	align-items: center;
+	padding: 0 10px;
+}
+
+#baseControl fieldset {
+	border: solid black 1px;
+	border-radius: 5px;
+}
+
+#baseControl fieldset div {
+	text-align: right;
+	margin: 10px 0;
+}
+
+progress {
+	width: 100%;
+}
+
+/* MAP */
+
 #map {
 	display: inline-block;
 	position: relative;
 	left: 10vw;
 	transform:  scaleY(0.5) rotate(45deg);
-}
-
-#baseControl {
-	display: none;
-}
-
-progress {
-	width: 100%;
 }
 
 .row {
@@ -49,7 +94,7 @@ progress {
 	background-image: url(openOcean.png);
 }
 
-.unit, .city, .resourceLabel {
+.unit, .city, .structure, .resourceLabel {
 	transform: rotate(-45deg) scaleY(2);
 	position: absolute;
 	z-index: 1;

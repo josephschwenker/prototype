@@ -1,12 +1,45 @@
+"use strict";
+
 // classes
 
-Array.prototype.removeLast = function(value) {
-	var index = this.lastIndexOf(value)
-	if (index !== -1) {
-		this.splice(index, 1)
+class Game {
+	
+	set active(piece) {
+		if (piece != undefined) {
+			if (piece instanceof Unit) {
+				// this will be a unit
+				document.getElementById("active").textContent = "Active: " + piece.constructor.fullName
+				if (this.active instanceof City) {
+					// we are switching a city to a unit, so close base control
+					closeBaseControl()
+				}
+				// play default sound
+				audioPieces.src = piece.sound
+				audioPieces.play()
+			}
+			else if (piece instanceof City) {
+				// a city will be active
+				document.getElementById("active").textContent = "Active: " + piece.fullName
+				// delete number of moves
+				document.getElementById("moves").textContent = "Moves: N/A"
+			}
+		}
+		else {
+			// there will be no active unit
+			document.getElementById("active").textContent = "Active: None"
+		}
+		
+		this._activePiece = piece
 	}
-	else {
-		throw new Error("Value not found in array.")
+	
+	get active() {
+		return this._activePiece
+	}
+	
+	constructor(map, active, turn) {
+		this.map = map
+		this.active = active
+		this.turn = turn
 	}
 }
 
@@ -25,24 +58,51 @@ class Modifier {
 	}
 }
 
-class City {
+class Piece {
 	constructor() {
 		this.name = ""
 		this.id = nextId++
+	}
+}
+
+class City extends Piece {
+	constructor() {
+		super()
 		this.facilities = [new IndustrialBase()] // new bases get a free Industrial Base
 		this.productionQueue = [new StockpileMinerals()] // default production is Stockpile Minerals
 		this.population = 1
+		this.sound = "sound/menu2.wav"
 		this.build = function() {
 			// advance construction progress on end turn
 			var mineralsPerTurn = this.getTotalResource("minerals")
 			var currentProduction = this.productionQueue[0]
 			currentProduction.currentMinerals += mineralsPerTurn
-			if (currentProduction.currentMinerals >= currentProduction.mineralCost) {
+			if (currentProduction.currentMinerals >= currentProduction.constructor.mineralCost) {
 				// production complete, append to facilities list or create unit
-				this.facilities.push(currentProduction)
-				console.log(this.facilities)
+				if (currentProduction instanceof Facility) {
+					this.facilities.push(currentProduction)
+					// play sound
+					audioInterface.src = "sound/cpu prod complete.wav"
+					audioInterface.play()
+				}
+				else if (currentProduction instanceof Unit) {
+					// add unit to map, then push to unitList
+					var c = getCoordinatesByItemId(this.id)
+					map[c.z][c.y][c.x].units.push(currentProduction)
+					unitList.push(currentProduction)
+					// play sound
+					audioInterface.src = "sound/cpu prod complete.wav"
+					audioInterface.play()
+				}
 				// reset queue
-				this.productionQueue = [ new StockpileMinerals() ]
+				if (this.productionQueue.length == 1) {
+					// this was the last item, so automatically stockpile minerals
+					this.productionQueue = [ new StockpileMinerals() ]
+				}
+				else {
+					// there are additional items in the production queue, so pop the item we just built off
+					this.productionQueue.pop()
+				}
 			}
 		}
 		this.generateName = function() {
@@ -50,10 +110,10 @@ class City {
 			var name = cityNamesList[i]
 			// remove name so it cannot be used again
 			cityNamesList.removeLast(name)
-			this.name = name
+			this.fullName = name
 		}
 		this.getResourceTiles = function() {
-			var c = getTileCoordinatesByItemId(this.id)
+			var c = getCoordinatesByItemId(this.id)
 			var resourceTiles = []
 			resourceTiles.push( new Tuple(c.z, c.y-2, c.x-1) )
 			resourceTiles.push( new Tuple(c.z, c.y-2, c.x) )
@@ -83,48 +143,40 @@ class City {
 			if ( tileExists(z, y, x) ) {
 				// get resources before modifiers
 				var output = map[z][y][x][resource]
-				// initialize modifiers
-				var add = 0
-				var mult = 0
-				var c = getTileCoordinatesByItemId(this.id)
-				if (c.z === z && c.y === y && c.x === x) {
-					// base tile, no modifiers from structures
+				var c = getCoordinatesByItemId(this.id)
+				
+				// city tile, no structures allowed
+				if (c.z == z && c.y == y && c.x == x) {
+					// look through facilities instead
 					
-					// no penalty from lack of structures
-					mult = 1
-					
-					// look through facilities
-					
-					// if Industrial Base, max(3, output)
-					if ( active.facilities.find( i => i.constructor.name == "IndustrialBase") ) {
-						output = Math.max(3, output)
+					// if Industrial Base, max(2, output)
+					if ( this.facilities.find( i => i instanceof IndustrialBase) ) {
+						output = Math.max(2, output)
 					}
 					// if Recycler, output+1
-					if ( active.facilities.find( i => i.constructor.name == "Recycler") ) {
+					if ( this.facilities.find( i => i instanceof Recycler) ) {
 						output = output + 1
 					}
 				}
+				// non-base tile, use standard calculation
 				else {
-					// non-base tile, use standard calculation
-					
 					// apply modifiers from structures, if any
 					var structures = map[z][y][x].structures
-					if (structures.length !== 0) {
-						for (var s of structures) {
-							add += s[resource].add
-							mult += s[resource].mult
+					// missing flotation farm
+					if (resource == "food") {
+						if ( structures.find( i => i instanceof FlotationFarm) == undefined ) {
+							output = 0
+						}
+					}
+					// missing solar array
+					if (resource == "credits") {
+						if ( structures.find( i => i instanceof SolarArray) == undefined ) {
+							output = 0
 						}
 					}
 				}
-				// apply facility modifiers to base and non-base tiles
-				var facilities = active.facilities
-				if (facilities.length !== 0) {
-					for (var f of facilities) {
-						add += f[resource].add
-						mult += f[resource].mult
-					}
-				}
-				return mult*output + add
+				// apply facility modifiers for base/non-base tiles
+				return output
 			}
 			else {
 				// tile does not exist
@@ -139,9 +191,9 @@ class City {
 					var span = document.createElement("span")
 					span.className = "resourceLabel"
 					span.textContent = 
-						"N: " + this.getTileResource("food", c.z, c.y, c.x) + " " +
-						"M: " + this.getTileResource("minerals", c.z, c.y, c.x) + " " +
-						"C: " + this.getTileResource("credits", c.z, c.y, c.x)
+						this.getTileResource("food", c.z, c.y, c.x) + " " +
+						this.getTileResource("minerals", c.z, c.y, c.x) + " " +
+						this.getTileResource("credits", c.z, c.y, c.x)
 					tile.appendChild(span)
 				}
 			}
@@ -160,10 +212,8 @@ class City {
 
 class Facility {
 	constructor() {
-		this.name = ""
 		this.id = nextId++
 		this.currentMinerals = 0
-		this.mineralCost = 0
 		this.upkeep = 0
 		this.available = true
 		this.food = new Modifier()
@@ -174,27 +224,29 @@ class Facility {
 }
 
 class StockpileMinerals extends Facility {
+	static fullName = "Stockpile Minerals"
+	static mineralCost = 999
 	constructor() {
 		super()
-		this.name = "Stockpile Minerals"
-		this.mineralCost = 999
 	}
 }
 
+
 class IndustrialBase extends Facility {
+	static fullName = "Industrial Base"
+	static mineralCost = 0
+	static upkeep = 0
 	constructor() {
 		super()
-		this.name = "Industrial Base"
-		this.mineralCost = 0
-		this.upkeep = 0
 	}
 }
 
 class AdministrationNexus extends Facility {
+	static fullName = "Administration Nexus"
+	static mineralCost = 30
+	static upkeep = 0
 	constructor() {
 		super()
-		this.name = "Administration Nexus"
-		this.mineralCost = 30
 		this.upkeep = 0
 		this.food.mult = 0.25
 		this.minerals.mult = 0.25
@@ -203,34 +255,37 @@ class AdministrationNexus extends Facility {
 }
 
 class Recycler extends Facility {
+	static fullName = "Recycler"
+	static mineralCost = 20
+	static upkeep = 20
 	constructor() {
 		super()
-		this.name = "Recycler"
-		this.mineralCost = 20
-		this.upkeep = 0
 	}
 }
 
 class BiologyLab extends Facility {
+	static fullName = "Biology Lab"
+	static mineralCost = 30
+	static upkeep = 1
 	constructor() {
 		super()
-		this.name = "Biology Lab"
-		this.mineralCost = 30
-		this.upkeep = 1
 	}
 }
 
-class Unit {
+class Unit extends Piece {
+	set currentMoves(n) {
+		document.getElementById("moves").textContent = "Moves: " + n
+		this._currentMoves = n
+	}
+	get currentMoves() {
+		return this._currentMoves
+	}
 	constructor() {
-		this.id = nextId++
-		this.name = ""
-		this.shortName = ""
+		super()
 		this.attack = 0
 		this.defense = 0
-		this.currentMoves = 0
 		this.maxMoves = 0
 		this.currentMinerals = 0
-		this.mineralCost = 0
 		this.currentHealth = 0
 		this.maxHealth = 0
 		this.upkeep = 0
@@ -239,7 +294,9 @@ class Unit {
 			// remove unit from tile
 			var tile = getItemTileById(this.id)
 			tile.units.removeLast(this)
-			active = undefined
+			// remove unit from unitList
+			unitList.removeLast(this)
+			game.active = undefined
 			render()
 		}
 		this.resetMoves = function() {
@@ -259,57 +316,108 @@ class Unit {
 }
 
 class ScoutSkimmer extends Unit {
+	static fullName = "Scout Skimmer"
+	static shortName = "scoutSkimmer"
+	static mineralCost = 10
 	constructor() {
 		super()
-		this.name = "Scout Skimmer"
-		this.shortName = "scoutSkimmer"
 		this.attack = 0
 		this.defense = 0
 		this.currentMoves = 6
 		this.maxMoves = 6
 		this.currentHealth = 10
 		this.maxHealth = 10
-		this.mineralCost = 10
+		this.sound = "sound/ship.wav"
 	}
 }
 
 class PodSkimmer extends Unit {
+	static fullName = "Pod Skimmer"
+	static shortName = "podSkimmer"
+	static mineralCost = 10
 	constructor() {
 		super()
-		this.name = "Pod Skimmer"
-		this.shortName = "podSkimmer"
 		this.attack = 0
 		this.defense = 0
 		this.currentMoves = 3
 		this.maxMoves = 3
 		this.currentHealth = 10
 		this.maxHealth = 10
-		this.mineralCost = 10
-		this.buildCity = function() {
-			if (this.currentMoves >= 1) {
-				var city = new City()
-				city.generateName()
-				var c = getActiveCoordinates()
-				map[c.z][c.y][c.x].city = city
-				cityList.push(city)
-				this.disband()
-				render()
-			}
+		this.sound = "sound/ship.wav"
+	}
+	buildCity = function() {
+		if (this.currentMoves >= 1) {
+			var city = new City()
+			city.generateName()
+			var c = getActiveCoordinates()
+			map[c.z][c.y][c.x].city = city
+			cityList.push(city)
+			this.disband()
+			render()
+			// open the most recently-created city
+			game.active = cityList[cityList.length-1]
+			openBaseControl()
 		}
 	}
+	
 }
 
 class EngineerSkimmer extends Unit {
+	static fullName = "Engineer Skimmer"
+	static shortName = "engineerSkimmer"
+	static mineralCost = 20
 	constructor() {
 		super()
-		this.name = "Engineer Skimmer"
 		this.attack = 0
 		this.defense = 0
 		this.currentMoves = 3
 		this.maxMoves = 3
 		this.currentHealth = 10
 		this.maxHealth = 10
-		this.mineralCost = 20
+		this.assignedTo = undefined
+		this.sound = "sound/ship.wav"
+	}
+	terraform = function(structure) {
+		// must have at least one move left
+		if (this.currentMoves > 0) {
+			var t = getActiveTile()
+			// check for a structure already being built
+			var currentStructure = t.productionQueue.find( s => s instanceof structure )
+			if ( currentStructure == undefined ) {
+				// no one has started building this structure
+				var currentStructure = new structure()
+				t.productionQueue.push( currentStructure )
+			}
+			// assign this engineer to the structure
+			this.assignedTo = currentStructure
+			// forfeit this unit's moves
+			this.currentMoves = 0
+			// re-render to show engineer status
+			render()
+		}
+	}
+	advanceTerraform = function() {
+		// only advance construction if the engineer is on the same tile as its assignment
+		if (this.assignedTo != undefined) {
+			// structure has not been completed
+			this.assignedTo.progress++
+			// check if this structure has been completed
+			if (this.assignedTo.progress >= this.assignedTo.constructor.buildTime) {
+				// get tile
+				var t = getTileByItemId(this.id)
+				// append to the list of completed structures if not already present
+				if ( t.structures.indexOf(this.assignedTo) == -1 ) {
+					t.structures.push(this.assignedTo)
+					// remove this structure from the production queue
+					t.productionQueue.removeLast( this.assignedTo )
+				}
+				// remove unit from assignment
+				this.assignedTo = undefined
+				// play sound
+				audioInterface.src = "sound/CPU terraform complete.wav"
+				audioInterface.play()
+			}
+		}
 	}
 }
 
@@ -322,6 +430,7 @@ class Tile {
 		this.special = ""
 		this.units = []
 		this.structures = []
+		this.productionQueue = []
 		this.city
 		this.food = 0
 		this.minerals = 0
@@ -333,21 +442,26 @@ class Structure {
 	constructor() {
 		this.name = ""
 		this.id = nextId++
-		this.food = new Modifier()
-		this.minerals = new Modifier()
-		this.credits = new Modifier()
 		this.buildTime = 0
+		this.progress = 0
 	}
 }
 
-class Hydroculture extends Structure {
+class FlotationFarm extends Structure {
+	static fullName = "Flotation Farm"
+	static buildTime = 3
+	static shortcut = "F"
 	constructor() {
 		super()
-		this.name = Hydroculture
-		this.food.mult = 1
-		this.minerals.mult = 1
-		this.credits.mult = 1
-		this.buildTime = 3
+	}
+}
+
+class SolarArray extends Structure {
+	static fullName = "Solar Array"
+	static buildTime = 3
+	static shortcut = "S"
+	constructor() {
+		super()
 	}
 }
 
@@ -364,10 +478,10 @@ class OpenOcean extends Tile {
 
 // global variables
 
-var turn = 1
+var game = new Game()
+var turn = 0
 var unitList = []
 var nextId = 0
-var active
 var cityNamesList = ["Alpha Prime", "Glorious Awakening", "New Inception", "Terra Nova"]
 var cityList = []
 
@@ -381,86 +495,113 @@ for (var y=0; y<mapSize; y++) {
 	}
 }
 
+// sound system
+
+var audioPieces = document.getElementById("audioPieces")
+var audioInterface = document.getElementById("audioInterface")
+var audioMusic = document.getElementById("audioMusic")
+
 // events
 
+// close base control
+document.getElementById("closeBaseControl").onclick = closeBaseControl
+
+// change production
 document.getElementById("productionMenu").onchange = changeProduction
 
+// build city
 document.getElementById("buildCity").onclick = buildCity
 
+// disband unit
 document.getElementById("disband").onclick = function() {
-	if (active.disband !== undefined) {
-		active.disband()
+	if (game.active.disband !== undefined) {
+		game.active.disband()
 	}
 }
 
+// terraform farm
+document.getElementById("buildFarm").onclick = buildFarm
+
+// terraform solar
+
+document.getElementById("buildSolar").onclick = buildSolar
+
+// end turn
 document.getElementById("endTurn").onclick = endTurn
 
 function onItemSelect(e) {
-	active = getItemById(e.target.id)
-	document.getElementById("active").textContent = "Active: " + active.name
-	if ( active.constructor.name == "City") {
+	game.active = getItemById(e.target.id)
+	if ( game.active instanceof City) {
 		openBaseControl()
 	}
 	else {
-		closeBaseControl()
+		//closeBaseControl()
 	}
 }
 
-onkeypress = function(e) {
+onkeydown = function(e) {
 	// global shortcuts
-	switch (e.which) {
-		case 13:
+	switch (e.key) {
+		case "Enter":
 			// enter
 			endTurn()
 			break
 	}
-	if (active !== undefined) {
+	if (game.active != undefined) {
 		// shortcuts for active unit
 		var tile = getActiveCoordinates()
-		switch (e.which) {
-			case 100:
+		switch (e.key) {
+			case "d":
 				// d
-				if (active.disband !== undefined) {
-					active.disband()
+				if (game.active.disband !== undefined) {
+					game.active.disband()
 				}
 				break
-			case 98:
+			case "b":
 				// b
-				if (active.buildCity !== undefined) {
-					active.buildCity()
-				}
+				buildCity()
 				break
-			case 56:
+			case "f":
+				buildFarm()
+				break
+			case "s":
+				buildSolar()
+				break
+			case "8":
 				// up
-				active.moveTo(tile.z, tile.y-1, tile.x-1)
+				game.active.moveTo(tile.z, tile.y-1, tile.x-1)
 				break
-			case 57:
+			case "9":
 				// up right
-				active.moveTo(tile.z, tile.y-1, tile.x)
+				game.active.moveTo(tile.z, tile.y-1, tile.x)
 				break
-			case 54:
+			case "6":
 				// right
-				active.moveTo(tile.z, tile.y-1, tile.x+1)
+				game.active.moveTo(tile.z, tile.y-1, tile.x+1)
 				break
-			case 51:
+			case "3":
 				// down right
-				active.moveTo(tile.z, tile.y, tile.x+1)
+				game.active.moveTo(tile.z, tile.y, tile.x+1)
 				break
-			case 50:
+			case "2":
 				// down
-				active.moveTo(tile.z, tile.y+1, tile.x+1)
+				game.active.moveTo(tile.z, tile.y+1, tile.x+1)
 				break
-			case 49:
+			case "1":
 				// down left
-				active.moveTo(tile.z, tile.y+1, tile.x-1)
+				game.active.moveTo(tile.z, tile.y+1, tile.x-1)
 				break
-			case 52:
+			case "4":
 				// left
-				active.moveTo(tile.z, tile.y+1, tile.x-1)
+				game.active.moveTo(tile.z, tile.y+1, tile.x-1)
 				break
-			case 55:
+			case "7":
 				// up left
-				active.moveTo(tile.z, tile.y, tile.x-1)
+				game.active.moveTo(tile.z, tile.y, tile.x-1)
+				break
+			case "Escape":
+				// escape
+				closeBaseControl()
 				break
 			default:
 				break;
@@ -470,15 +611,43 @@ onkeypress = function(e) {
 
 // utility functions
 
-function getActiveCoordinates() {
-	return getTileCoordinatesByItemId(active.id)
+Array.prototype.removeLast = function(value) {
+	var index = this.lastIndexOf(value)
+	if (index !== -1) {
+		this.splice(index, 1)
+	}
+	else {
+		// throw new Error("Value not found in array.")
+	}
 }
 
-function getTileCoordinatesByItemId(id) {
+function getActiveCoordinates() {
+	return getCoordinatesByItemId(game.active.id)
+}
+
+function getActiveTile() {
+	var c = getActiveCoordinates()
+	return map[c.z][c.y][c.x]
+}
+
+function getCoordinatesByItemId(id) {
+	var id = document.getElementById(id)
+	if (id) {
+		var c = id.parentElement.id.split(",")
+		return new Tuple(
+			Number(c[0]),
+			Number(c[1]),
+			Number(c[2])
+		)
+	}
+	else {
+		throw new Error("No such item ID.")
+	}
+	/*
 	var z=0
 	for (var y=0; y<map[z].length; y++) {
 		for (var x=0; x<map[z][y].length; x++) {
-			tile = map[z][y][x]
+			var tile = map[z][y][x]
 			var units = tile.units
 			if (units.length !== 0) {
 				for (var i=0; i<units.length; i++) {
@@ -495,6 +664,12 @@ function getTileCoordinatesByItemId(id) {
 			}
 		}
 	}
+	*/
+}
+
+function getTileByItemId(id) {
+	var c = getCoordinatesByItemId(id)
+	return map[c.z][c.y][c.x]
 }
 
 function getUiTileByCoordinates(z, y, x) {
@@ -518,7 +693,7 @@ function getItemTileById(id) {
 		for (var x=0; x<map[z][y].length; x++) {
 			var tile = map[z][y][x]
 			if (tile.units.length !== 0) {
-				for (i=0; i<tile.units.length; i++) {
+				for (var i=0; i<tile.units.length; i++) {
 					if (tile.units[i].id == id) {
 						return tile
 					}
@@ -539,7 +714,7 @@ function getItemById(id) {
 		for (var x=0; x<map[z][y].length; x++) {
 			var tile = map[z][y][x]
 			if (tile.units.length !== 0) {
-				for (i=0; i<tile.units.length; i++) {
+				for (var i=0; i<tile.units.length; i++) {
 					if (tile.units[i].id == id) {
 						return tile.units[i]
 					}
@@ -558,33 +733,41 @@ function getItemById(id) {
 
 function openBaseControl() {
 	render()
-	document.getElementById("cityName").textContent = active.name
-	active.drawResources()
-	document.getElementById("food").textContent = active.getTotalResource("food")
-	document.getElementById("minerals").textContent = active.getTotalResource("minerals")
-	document.getElementById("credits").textContent = active.getTotalResource("credits")
+	document.getElementById("cityName").textContent = game.active.fullName
+	game.active.drawResources()
+	document.getElementById("food").textContent = game.active.getTotalResource("food")
+	document.getElementById("minerals").textContent = game.active.getTotalResource("minerals")
+	document.getElementById("credits").textContent = game.active.getTotalResource("credits")
 	populateProductionMenu()
 	showProductionProgress()
 	populateFacilityList()
 	// show base control screen
 	document.getElementById("baseControl").style.display = "inline-block"
+	// play sound
+	audioInterface.src = "sound/menu2.wav"
+	audioInterface.play()
+
 	
 }
 
 function closeBaseControl() {
 	render()
 	document.getElementById("baseControl").style.display = "none"
+	game.active = undefined
+	// play sound
+	audioInterface.src = "sound/menu down.wav"
+	audioInterface.play()
 }
 
 function showProductionProgress() {
 	var productionProgress = document.getElementById("productionProgress")
-	productionProgress.value = active.productionQueue[0].currentMinerals
-	productionProgress.max = active.productionQueue[0].mineralCost
+	productionProgress.value = game.active.productionQueue[0].currentMinerals
+	productionProgress.max = game.active.productionQueue[0].constructor.mineralCost
 }
 
 function changeProduction() {
 	var productionTarget = document.getElementById("productionMenu").value
-	active.productionQueue = [ new productionMenu[productionTarget]() ]
+	game.active.productionQueue = [ new productionMenu[productionTarget]() ]
 }
 
 function populateFacilityList() {
@@ -594,9 +777,9 @@ function populateFacilityList() {
 		facilitiesList.firstElementChild.remove()
 	}
 	// populate list
-	for (var i of active.facilities) {
+	for (var i of game.active.facilities) {
 		var div = document.createElement("div")
-		div.textContent = i.name
+		div.textContent = i.constructor.fullName
 		facilitiesList.appendChild(div)
 	}
 }
@@ -609,39 +792,67 @@ function populateProductionMenu() {
 	}
 	// populate
 	for (var i=0; i<productionMenu.length; i++) {
-		var option = document.createElement("option")
-		// this shit shouldn't even be possible, like wtf javascript
-		//option.textContent = new productionMenu[i]().name
-		option.textContent = productionMenu[i].name
-		option.value = i
-		menu.appendChild(option)
+		// check whether this facility has already been built
+		if ( game.active.facilities.find( f => f instanceof productionMenu[i] ) == undefined ) {
+			var option = document.createElement("option")
+			// this shit shouldn't even be possible, like wtf javascript
+			//option.textContent = new productionMenu[i]().name
+			option.textContent =
+				productionMenu[i].fullName +
+				" (" +
+				Math.ceil(
+					productionMenu[i].mineralCost/game.active.getTotalResource("minerals")
+				) +
+				" turns)"
+			option.value = i
+			menu.appendChild(option)
+		}
 	}
 	// display current production target
-	menu.value = productionMenu.indexOf(active.productionQueue[0].constructor)
+	menu.value = productionMenu.indexOf(game.active.productionQueue[0].constructor)
 }
 
 function buildCity() {
-	if (active !== undefined && active.buildCity !== undefined) {
-		active.buildCity()
+	// if a piece is selected and this piece can build a city
+	if (game.active != undefined && game.active.buildCity !== undefined) {
+		game.active.buildCity()
+	}
+}
+
+function buildFarm() {
+	if (game.active instanceof EngineerSkimmer) {
+		game.active.terraform(FlotationFarm)
+	}
+}
+
+function buildSolar() {
+	if (game.active instanceof EngineerSkimmer) {
+		game.active.terraform(SolarArray)
 	}
 }
 
 function endTurn() {
-	// remember last active
-	var oldActive = active
-	// reset unit moves
-	for (var unit of unitList) {
-		unit.resetMoves()
+	// do not advance turns while base control is open
+	if ( !(game.active instanceof City) ) {
+		// advance structure construction, reset unit moves
+		for (var unit of unitList) {
+			if (unit instanceof EngineerSkimmer) {
+				unit.advanceTerraform()
+			}
+			// reset this unit's moves
+			unit.resetMoves()
+		}
+		// advance facility and unit construction
+		for (var city of cityList) {
+			//game.active = city // quick and dirty workaround ;)
+			city.build()
+		}
+		// reset active unit
+		turn++
+		render()
+		// reset active
+		game.active = undefined
 	}
-	// advance facility and unit construction
-	for (var city of cityList) {
-		active = city // quick and dirty workaround ;)
-		city.build()
-	}
-	// reset active unit
-	active = oldActive
-	turn++
-	render()
 }
 
 function initialize() {
@@ -684,39 +895,48 @@ function render() {
 			if (tile.city !== undefined) {
 				var button = document.createElement("button")
 				button.id = tile.city.id
-				button.textContent = tile.city.name
+				button.textContent = tile.city.fullName
 				button.onclick = onItemSelect
 				button.className = "city"
 				target.appendChild(button)
 			}
+			// render structures if present
+			if (tile.structures.length != 0) {
+				for (var s of tile.structures) {
+					var button = document.createElement("button")
+					button.id = s.id
+					button.textContent = s.constructor.shortcut
+					button.className = "structure"
+					target.appendChild(button)
+				}
+			}
 			// Render units if present
 			if (tile.units.length !== 0) {
-				for (i=0; i<tile.units.length; i++) {
-					currentUnit = tile.units[i]
+				for (var i=0; i<tile.units.length; i++) {
+					var currentUnit = tile.units[i]
 					var button = document.createElement("button")
 					button.id = currentUnit.id
 					button.className = "unit"
-					button.textContent = currentUnit.name + " (" + currentUnit.currentMoves + ")"
+					button.textContent = currentUnit.constructor.fullName + " (" + currentUnit.currentMoves + ")"
+					// add status for engineers building a structure
+					if (currentUnit instanceof EngineerSkimmer && currentUnit.assignedTo != undefined) {
+						button.textContent +=
+						" (" +
+						currentUnit.assignedTo.constructor.shortcut +
+						")"
+					}
 					button.onclick = onItemSelect
 					target.appendChild(button)
 				}
 			}
 		}
 	}
-	// render status bar
-	if (active !== undefined) {
-		// active unit or city
-		document.getElementById("active").textContent = "Active: " + active.name
-	}
-	else {
-		document.getElementById("active").textContent = "Active: None"
-	}
 }
 
 // begin
 
 var productionMenu = [StockpileMinerals, AdministrationNexus, Recycler, BiologyLab, PodSkimmer, ScoutSkimmer, EngineerSkimmer]
-map[0][3][3].units.push( new PodSkimmer() )
-unitList.push( map[0][3][3].units[0] )
+map[0][3][3].units.push( new PodSkimmer(), new EngineerSkimmer() )
+unitList.push( map[0][3][3].units[0], map[0][3][3].units[1] )
 initialize()
 render()
