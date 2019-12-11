@@ -107,28 +107,54 @@ progress {
 
 .city, .flotationFarm, .solarArray, .unit {
 	transform: translateY(-75%) rotate(-45deg) scaleY(2) translateX(-50%);
+}
+
+.city {
+	
+}
+
+.cityLabel {
+	background: black;
+	color: white;
+	position: absolute;
+}
+
+.cityIcon {
+	height: 100px;
+	width: 100px;
+	background-image: url(graphics/city.png);
 	background-size: contain;
 	background-repeat: no-repeat;
 	background-position: center;
 }
 
-.city {
-	height: 100px;
-	width: 100px;
-	background-image: url(graphics/city.png);
-}
 
 .flotationFarm, .solarArray {
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
 	background-image: url(graphics/flotationFarm.png);
 	transform: rotate(-45deg) scaleY(2) translateY(-15%);
 	height: 40px;
 	width: 40px;
 }
 
-.unit {
+.unit .unitIcon {
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
 	background-image: url(graphics/U.ironclad.png);
 	height: 50px;
 	width: 50px;
+}
+
+.unitLabel {
+	background: black;
+	color: white;
+}
+
+.unitIcon {
+	
 }
 
 .resourceLabel {

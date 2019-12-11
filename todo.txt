@@ -1,10 +1,20 @@
 TODO
-	Disallow building same structure on same tile more than once
-	Show terraform status
+	Implement status class: fullName: "Building Solar Array", abbreviation: "S"
+	Implement status property for all units
+		Status: Building Solar Array, S
+		Status: Building Flotation Farm, F
+		Status: Building Recycler, none
+		Status: Idle, -
+		Status: Sentrying, L
+		Status: Holding, H
+	Blink active unit
+	Structures of different classes can stack: Structure, ResourceStructure, MovementStructure, MilitaryStructure, ExtraResourceStructure
+	Replace structures array with pointer to a ResourceStructure
+	Show message log: population growth, production complete, terraform complete, etc.
 	Show list of all units with moves remaining
 	Automatically activate next unit with removes remaining
 	Population growth
-	Resource stockpiles
+	Accumulate nutrients/credits/minerals
 	Research
 	Unit designer
 	Save/restore using Game object

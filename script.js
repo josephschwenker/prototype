@@ -1,8 +1,10 @@
-"use strict";
+"use strict"
 
 // classes
 
 class Game {
+	
+	#activePiece
 	
 	set active(piece) {
 		if (piece != undefined) {
@@ -32,11 +34,11 @@ class Game {
 			document.getElementById("active").textContent = "Active: None"
 		}
 		
-		this._activePiece = piece
+		this.#activePiece = piece
 	}
 	
 	get active() {
-		return this._activePiece
+		return this.#activePiece
 	}
 	
 	constructor(map, active, turn) {
@@ -65,13 +67,6 @@ class Tuple {
 		else {
 			return false
 		}
-	}
-}
-
-class Modifier {
-	constructor() {
-		this.add = 0
-		this.mult = 0
 	}
 }
 
@@ -233,9 +228,6 @@ class Facility {
 		this.currentMinerals = 0
 		this.upkeep = 0
 		this.available = true
-		this.food = new Modifier()
-		this.minerals = new Modifier()
-		this.credits = new Modifier()
 		this.creditsMult = 0
 	}
 }
@@ -290,12 +282,13 @@ class BiologyLab extends Facility {
 }
 
 class Unit extends Piece {
+	#currentMoves
 	set currentMoves(n) {
 		document.getElementById("moves").textContent = "Moves: " + n
-		this._currentMoves = n
+		this.#currentMoves = n
 	}
 	get currentMoves() {
-		return this._currentMoves
+		return this.#currentMoves
 	}
 	constructor() {
 		super()
@@ -394,23 +387,33 @@ class EngineerSkimmer extends Unit {
 		this.assignedTo = undefined
 		this.sound = "sound/ship.wav"
 	}
+	// begin terraform
 	terraform = function(structure) {
-		// must have at least one move left
 		if (this.currentMoves > 0) {
+			// unit has at least one move left
 			var t = getActiveTile()
-			// check for a structure already being built
-			var currentStructure = t.productionQueue.find( s => s instanceof structure )
-			if ( currentStructure == undefined ) {
-				// no one has started building this structure
-				var currentStructure = new structure( getActiveCoordinates() )
-				t.productionQueue.push( currentStructure )
+			if ( t.structures.find( s => s instanceof structure ) != undefined ) {
+				// this structure already exists
+				// play sound
+				audioInterface.src = "sound/cpu improved already.wav"
+				audioInterface.play()
 			}
-			// assign this engineer to the structure
-			this.assignedTo = currentStructure
-			// forfeit this unit's moves
-			this.currentMoves = 0
-			// re-render to show engineer status
-			render()
+			else {
+				// this structure has not yet been built
+				var currentStructure = t.productionQueue.find( s => s instanceof structure )
+				if ( currentStructure == undefined ) {
+					// no one has started building this structure
+					var currentStructure = new structure( getActiveCoordinates() )
+					// add new structure to production queue
+					t.productionQueue.push( currentStructure )
+				}
+				// assign this engineer to the structure
+				this.assignedTo = currentStructure
+				// forfeit this unit's moves
+				this.currentMoves = 0
+				// re-render to show engineer status
+				render()
+			}
 		}
 	}
 	advanceTerraform = function() {
@@ -427,10 +430,16 @@ class EngineerSkimmer extends Unit {
 			}
 			// check if this structure has been completed
 			if (this.assignedTo.progress >= this.assignedTo.constructor.buildTime) {
-				// get tile
+				// structure completed
 				var t = getTileByItemId(this.id)
-				// append to the list of completed structures if not already present
+				// check if structure is already present
 				if ( t.structures.indexOf(this.assignedTo) == -1 ) {
+					// structure is not yet present
+					var oldStructure = t.structures.find( s => s instanceof Structure )
+					if ( oldStructure != undefined ) {
+						// remove pre-existing structure if present
+						t.structures.removeLast(oldStructure)
+					}
 					t.structures.push(this.assignedTo)
 					// remove this structure from the production queue
 					t.productionQueue.removeLast( this.assignedTo )
@@ -557,7 +566,7 @@ document.getElementById("buildSolar").onclick = buildSolar
 document.getElementById("endTurn").onclick = endTurn
 
 function onItemSelect(e) {
-	game.active = getItemById(e.target.id)
+	game.active = getItemById(e.target.parentElement.id)
 	if ( game.active instanceof City) {
 		openBaseControl()
 	}
@@ -918,11 +927,21 @@ function render() {
 			// Apply tile background
 			target.classList.add(tile.shortName)
 			// Render city if present
-			if (tile.city !== undefined) {
+			if (tile.city != undefined) {
 				var city = document.createElement("div")
 				city.id = tile.city.id
 				city.onclick = onItemSelect
 				city.className = "city"
+				
+				var cityIcon = document.createElement("div")
+				cityIcon.className = "cityIcon"
+				var cityLabel = document.createElement("div")
+				cityLabel.className = "cityLabel"
+				cityLabel.textContent = tile.city.fullName
+				
+				city.appendChild(cityIcon)
+				city.appendChild(cityLabel)
+				
 				target.appendChild(city)
 			}
 			// render structures if present
@@ -936,23 +955,39 @@ function render() {
 				}
 			}
 			// Render units if present
-			if (tile.units.length !== 0) {
+			if (tile.units.length != 0) {
 				for (var i=0; i<tile.units.length; i++) {
 					var currentUnit = tile.units[i]
 					var unit = document.createElement("div")
 					unit.id = currentUnit.id
 					unit.className = "unit"
-					//unit.textContent = currentUnit.constructor.fullName + " (" + currentUnit.currentMoves + ")"
-					// add status for engineers building a structure
-					if (currentUnit instanceof EngineerSkimmer && currentUnit.assignedTo != undefined) {
-						/*
-						unit.textContent +=
-						" (" +
-						currentUnit.assignedTo.constructor.shortcut +
-						")"
-						*/
+					
+					var unitLabel = document.createElement("div")
+					unitLabel.className = "unitLabel"
+					var unitIcon = document.createElement("div")
+					unitIcon.className = "unitIcon"
+					
+					// status for any unit without orders
+					
+					unitLabel.textContent = "-"
+					
+					// status for units with no moves left
+					
+					if (currentUnit.currentMoves == 0) {
+						unitLabel.textContent = "0"
 					}
-					unit.onclick = onItemSelect
+					
+					// status for engineers building a structure
+					if (currentUnit instanceof EngineerSkimmer && currentUnit.assignedTo != undefined) {
+						unitLabel.textContent = 
+							currentUnit.assignedTo.constructor.shortcut
+					}
+					
+					unitIcon.onclick = onItemSelect
+					
+					unit.appendChild(unitLabel)
+					unit.appendChild(unitIcon)
+					
 					target.appendChild(unit)
 				}
 			}
