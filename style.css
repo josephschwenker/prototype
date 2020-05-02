@@ -36,12 +36,12 @@ body {
 	justify-content: center;
 	background: white;
 	cursor: default;
-	border-radius: 5px;
+	border-radius: 2px;
 }
 
 #cityName {
 	border: solid black 1px;
-	border-radius: 5px;
+	border-radius: 2px;
 	height: 24px;
 	width: 100%;
 	display: flex;
@@ -51,7 +51,7 @@ body {
 
 #baseControl fieldset {
 	border: solid black 1px;
-	border-radius: 5px;
+	border-radius: 2px;
 }
 
 #baseControl fieldset div {
@@ -99,6 +99,7 @@ progress {
 	transform: rotate(-45deg) scaleY(2) translateY(-25%);
 	position: absolute;
 	z-index: 1;
+	width: --tile-size;
 }
 
 .resourceLabel {
@@ -106,17 +107,21 @@ progress {
 }
 
 .city, .flotationFarm, .solarArray, .unit {
-	transform: translateY(-75%) rotate(-45deg) scaleY(2) translateX(-50%);
+	
 }
 
 .city {
-	
+	display: flex;
+	justify-content: center;
 }
 
 .cityLabel {
 	background: black;
 	color: white;
 	position: absolute;
+	white-space: pre;
+	bottom: 0;
+	transform: translateY(50%)
 }
 
 .cityIcon {
@@ -137,6 +142,24 @@ progress {
 	transform: rotate(-45deg) scaleY(2) translateY(-15%);
 	height: 40px;
 	width: 40px;
+}
+
+/* UNITS */
+
+@keyframes activeUnit {
+	0% {
+		opacity: 0;
+	}
+	50% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+.active .unitIcon:hover {
+	animation: activeUnit 0.5s step-start infinite;
 }
 
 .unit .unitIcon {

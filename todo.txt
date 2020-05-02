@@ -1,21 +1,27 @@
 TODO
-	Implement status class: fullName: "Building Solar Array", abbreviation: "S"
-	Implement status property for all units
-		Status: Building Solar Array, S
-		Status: Building Flotation Farm, F
+	City status updates on production change, advance production
+	Fix bug where current production item is used to populate UI moves
+	Implement status property for all pieces
 		Status: Building Recycler, none
-		Status: Idle, -
 		Status: Sentrying, L
 		Status: Holding, H
-	Blink active unit
-	Structures of different classes can stack: Structure, ResourceStructure, MovementStructure, MilitaryStructure, ExtraResourceStructure
-	Replace structures array with pointer to a ResourceStructure
-	Show message log: population growth, production complete, terraform complete, etc.
+	Show production queue
+	Only play unit sound when first selected, not when moved
+	Fix bug with pieces not always being given active status when clicked
+	Prohibit bases from harvesting the same resource tiles, oldest base takes precedence
+	Show outline of base radius before confirming build
 	Show list of all units with moves remaining
 	Automatically activate next unit with removes remaining
+	Mouse movement
+	Structures of different classes can stack: Structure, ResourceStructure, MovementStructure, MilitaryStructure, ExtraResourceStructure
+	Replace structures array with pointer to a ResourceStructure
+	Show message log: population growth, production complete, terraform complete, structure already exists, etc.
 	Population growth
 	Accumulate nutrients/credits/minerals
 	Research
-	Unit designer
+	Unit designer: mixins, Object.prototype.assign(target, source)
 	Save/restore using Game object
 	Write to filesystem
+	Port to Node.js
+	Multiplayer
+	Preload all files automatically
