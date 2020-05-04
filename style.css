@@ -15,6 +15,55 @@ body {
 	height: 100vh;
 }
 
+/* UNIT LIST */
+
+#unitList {
+	margin-bottom: 10px;
+	display: flex;
+	flex-direction: row;
+	height: 100px;
+}
+
+#unitList > * {
+	margin: 5px;
+}
+
+#unitList::before, #unitList::after {
+	content: "";
+	width: 10px;
+	height: 100px;
+	border: solid black 1px;
+}
+
+#unitList::before {
+	border-right: none;
+	margin-right: -10px;
+}
+
+#unitList::after {
+	border-left: none;
+	margin-left: -10px;
+}
+
+.unitSelectContainer {
+	width: 100px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+	text-align: center;
+	border: solid transparent 1px;
+	border-radius: 2px;
+}
+
+.unitSelectContainer.active {
+	border: solid black 1px;
+}
+
+.unitSelectLabel {
+	
+}
+
 /* BASE CONTROL */
 
 #baseControl {
@@ -22,6 +71,7 @@ body {
 	display: none;
 	bottom: 0;
 	right: 0;
+	background: white;
 }
 
 #closeBaseControl {
@@ -158,11 +208,11 @@ progress {
 	}
 }
 
-.active .unitIcon:hover {
+.active .unitIcon {
 	animation: activeUnit 0.5s step-start infinite;
 }
 
-.unit .unitIcon {
+.unitIcon {
 	background-size: contain;
 	background-repeat: no-repeat;
 	background-position: center;

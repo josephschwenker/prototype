@@ -1,19 +1,12 @@
 TODO
-	City status updates on production change, advance production
-	Fix bug where current production item is used to populate UI moves
-	Implement status property for all pieces
-		Status: Building Recycler, none
-		Status: Sentrying, L
-		Status: Holding, H
+	Cancel Orders button
+	Verify multiple engineers aggregate work correctly
 	Show production queue
-	Only play unit sound when first selected, not when moved
-	Fix bug with pieces not always being given active status when clicked
 	Prohibit bases from harvesting the same resource tiles, oldest base takes precedence
 	Show outline of base radius before confirming build
-	Show list of all units with moves remaining
 	Automatically activate next unit with removes remaining
 	Mouse movement
-	Structures of different classes can stack: Structure, ResourceStructure, MovementStructure, MilitaryStructure, ExtraResourceStructure
+	Structures of different classes can stack: ResourceStructure, MovementStructure, MilitaryStructure, ExtraResourceStructure
 	Replace structures array with pointer to a ResourceStructure
 	Show message log: population growth, production complete, terraform complete, structure already exists, etc.
 	Population growth
