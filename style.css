@@ -66,12 +66,16 @@ select:focus {
 	border-radius: 2px;
 }
 
-.unitSelectContainer.active {
-	border: solid black 1px;
+.unitName {
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	width: 100%;
+	padding: 0 5px;
 }
 
-.unitSelectLabel {
-	
+.unitSelectContainer.active {
+	border: solid black 1px;
 }
 
 /* BASE CONTROL */
@@ -162,7 +166,6 @@ progress {
 	transform: rotate(-45deg) scaleY(2) translateY(-25%);
 	position: absolute;
 	z-index: 1;
-	width: --tile-size;
 }
 
 .resourceLabel {
@@ -170,7 +173,7 @@ progress {
 }
 
 .city, .flotationFarm, .solarArray, .unit {
-	
+	width: 75px;
 }
 
 .city {
@@ -221,8 +224,24 @@ progress {
 	}
 }
 
-.active .unitIcon {
+.active::before, .active::after {
+	content: "";
+	position: absolute;
+	width: 10px;
+	height: 100px;
+	top: -10px;
+	border: solid black 1px;
 	animation: activeUnit 0.5s step-start infinite;
+}
+
+.active::before {
+	border-right: none;
+	left: -12px;
+}
+
+.active::after {
+	border-left: none;
+	right: -12px;
 }
 
 .unitIcon {
@@ -237,10 +256,7 @@ progress {
 .unitLabel {
 	background: black;
 	color: white;
-}
-
-.unitIcon {
-	
+	width: 50px;
 }
 
 .resourceLabel {

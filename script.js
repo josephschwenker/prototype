@@ -1,5 +1,9 @@
 "use strict"
 
+// constants
+
+const RIGHT_MOUSE_BUTTON = 2
+
 // classes
 
 class Game {
@@ -917,7 +921,7 @@ function getUiTileByCoordinates(c) {
 
 function showPath(e) {
 	// only show the path if the active piece is a unit (not a city)
-	if (e.button == 2 && game.active instanceof Unit) {
+	if (e.button == RIGHT_MOUSE_BUTTON && game.active instanceof Unit) {
 		// calculate the path to the current tile
 		// yay, graph theory
 		// get the source tile
@@ -1306,13 +1310,18 @@ function renderUnitList() {
 		if (game.active == u) {
 			unitSelectContainer.classList.add("active")
 		}
+		let unitLabel = document.createElement("div")
+		unitLabel.classList.add("unitLabel")
+		unitLabel.textContent = u.status.abbreviation
 		let unitSelect = document.createElement("div")
 		unitSelect.classList.add("unitIcon")
-		let unitSelectLabel = document.createElement("div")
-		unitSelectLabel.textContent = u.constructor.fullName + " (" + u.status.abbreviation + ")"
+		let unitName = document.createElement("div")
+		unitName.classList.add("unitName")
+		unitName.textContent = u.constructor.fullName
 		
+		unitSelectContainer.appendChild(unitLabel)
 		unitSelectContainer.appendChild(unitSelect)
-		unitSelectContainer.appendChild(unitSelectLabel)
+		unitSelectContainer.appendChild(unitName)
 		
 		document.getElementById("unitList").appendChild(unitSelectContainer)
 	}

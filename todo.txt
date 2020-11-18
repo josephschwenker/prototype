@@ -1,6 +1,8 @@
 TODO
-	Replace magic numbers with GLOBAL_VARIABLES
-	Show flashing brackets around active unit
+	Show unitLabel in unitList
+	Base control should display around base
+	Center map on screen
+	Center units within tile
 	getTileResource returns 0 for all tiles except base
 	"Improvement already exists" instead of "Terraform complete"
 	Mouse movement (right click to move active unit, display path before release)
