@@ -5,7 +5,7 @@
 		<meta charset="utf-8">
 		<link rel="stylesheet" href="style.css">
 	</head>
-	<body>
+	<body oncontextmenu="return false">
 		<audio id="audioPieces"></audio>
 		<audio id="audioInterface"></audio>
 		<audio id="audioMusic"></audio>
@@ -16,18 +16,21 @@
 			<div id="closeBaseControl">x</div>
 			<fieldset>
 				<legend id="cityName"></legend>
-				<div>Nutrients: <span id="food"></span></div>
-				<div>Minerals: <span id="minerals"></span></div>
-				<div>Credits: <span id="credits"></span></div>
-				<div>Production Queue</div>
-				<div>
+				<fieldset>
+					<legend>Resources</legend>
+					<div>Nutrients: <span id="food"></span></div>
+					<div>Minerals: <span id="minerals"></span></div>
+					<div>Credits: <span id="credits"></span></div>
+				</fieldset>
+				<fieldset id="production">
+					<legend>Production</legend>
 					<select id="productionMenu"></select>
-				</div>
-				<div>
-					<progress id="productionProgress" value="0" max="0"></progress>
-				</div>
-				<div>Facilities:</div>
-				<div id="facilitiesList"></div>
+					<div id="productionQueue"></div>
+				</fieldset>
+				<fieldset>
+					<legend>Facilities</legend>
+					<div id="facilitiesList"></div>
+				</fieldset>
 			</fieldset>
 		</div>
 		<div id="unitList"></div>

@@ -9,10 +9,20 @@
 	font-family: Chicago;
 	font-size: 12px;
 	box-sizing: border-box;
+	user-select: none;
 }
 
 body {
 	height: 100vh;
+}
+
+select, select:hover {
+	border: solid black 1px;
+	height: 19px;
+}
+
+select:focus {
+	outline: none;
 }
 
 /* UNIT LIST */
@@ -105,12 +115,15 @@ body {
 }
 
 #baseControl fieldset div {
-	text-align: right;
 	margin: 10px 0;
 }
 
 progress {
 	width: 100%;
+}
+
+.productionQueueItemContainer {
+	border: solid black 1px;
 }
 
 /* MAP */
@@ -234,6 +247,15 @@ progress {
 	color: white;
 	background: black;
 }
+
+.path {
+	width: 20px;
+	height: 20px;
+	position: absolute;
+	background: lightgreen;
+}
+
+/* WIDGETS */
 
 button {
 	border-radius: 3px;
