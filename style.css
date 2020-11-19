@@ -215,7 +215,9 @@
 	}
 
 	.unit, .city, .structure, .resourceLabel {
-		text-align: center;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
 		transform: rotate(-45deg) scaleY(2) translateY(-25%);
 		position: absolute;
 		z-index: 1;
@@ -235,6 +237,7 @@
 	}
 
 	.cityLabel {
+		text-align: center;
 		background: black;
 		color: white;
 		position: absolute;
@@ -307,6 +310,7 @@
 	}
 
 	.unitLabel {
+		text-align: center;
 		background: black;
 		color: white;
 		width: 50px;
