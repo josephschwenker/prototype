@@ -1196,7 +1196,7 @@ function populateProductionMenu() {
 	}
 	// add default prompt
 	let o = document.createElement("option")
-	o.textContent = "Choose Production..."
+	o.textContent = "Add to Queue..."
 	o.selected = true
 	o.disabled = true
 	menu.appendChild(o)
@@ -1323,6 +1323,14 @@ function renderUnitList() {
 		unitSelectContainer.appendChild(unitSelect)
 		unitSelectContainer.appendChild(unitName)
 		
+		document.getElementById("unitList").appendChild(unitSelectContainer)
+	}
+	// sentinel for empty unit list
+	if (game.unitList.length == 0) {
+		let unitSelectContainer = document.createElement("div")
+		unitSelectContainer.classList.add("unitSelectContainer")
+		unitSelectContainer.classList.add("sentinel")
+		unitSelectContainer.textContent = "No Units"
 		document.getElementById("unitList").appendChild(unitSelectContainer)
 	}
 }

@@ -71,7 +71,7 @@ select:focus {
 	text-overflow: ellipsis;
 	overflow: hidden;
 	width: 100%;
-	padding: 0 5px;
+	padding: 0px 5px;
 }
 
 .unitSelectContainer.active {
@@ -80,55 +80,64 @@ select:focus {
 
 /* BASE CONTROL */
 
-#baseControl {
-	position: absolute;
-	display: none;
-	bottom: 0;
-	right: 0;
-	background: white;
-}
+	#baseControl {
+		position: absolute;
+		display: none;
+		top: 0;
+		right: 0;
+	}
 
-#closeBaseControl {
-	position: absolute;
-	right: 10px;
-	top: 0;
-	height: 24px;
-	width: 24px;
-	border: solid black 1px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: white;
-	cursor: default;
-	border-radius: 2px;
-}
+	#closeBaseControl {
+		position: absolute;
+		z-index: 1;
+		right: 10px;
+		top: 0;
+		height: 24px;
+		width: 24px;
+		border: solid black 1px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: white;
+		cursor: default;
+		border-radius: 2px;
+	}
+	
+	#baseControl > fieldset {
+		background: rgba(255, 255, 255, 0.5);
+		backdrop-filter: blur(25px);
+	}
 
-#cityName {
-	border: solid black 1px;
-	border-radius: 2px;
-	height: 24px;
-	width: 100%;
-	display: flex;
-	align-items: center;
-	padding: 0 10px;
-}
 
-#baseControl fieldset {
-	border: solid black 1px;
-	border-radius: 2px;
-}
+	#baseControl fieldset {
+		border: solid black 1px;
+		border-radius: 2px;
+	}
 
-#baseControl fieldset div {
-	margin: 10px 0;
-}
+	#cityName {
+		border: solid black 1px;
+		border-radius: 2px;
+		height: 24px;
+		width: 100%;
+		display: flex;
+		align-items: center;
+		padding: 0 10px;
+	}
 
-progress {
-	width: 100%;
-}
+	#baseControl fieldset {
+	}
 
-.productionQueueItemContainer {
-	border: solid black 1px;
-}
+	#baseControl fieldset div {
+		margin: 10px 0;
+	}
+
+	progress {
+		width: 100%;
+	}
+
+	.productionQueueItemContainer {
+		border: solid black 1px;
+	}
 
 /* MAP */
 
@@ -224,7 +233,7 @@ progress {
 	}
 }
 
-.active::before, .active::after {
+.active.unit::before, .active.unit::after {
 	content: "";
 	position: absolute;
 	width: 10px;
@@ -234,12 +243,12 @@ progress {
 	animation: activeUnit 0.5s step-start infinite;
 }
 
-.active::before {
+.active.unit::before {
 	border-right: none;
 	left: -12px;
 }
 
-.active::after {
+.active.unit::after {
 	border-left: none;
 	right: -12px;
 }

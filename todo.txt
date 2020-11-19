@@ -1,8 +1,7 @@
 TODO
-	Show unitLabel in unitList
-	Base control should display around base
 	Center map on screen
 	Center units within tile
+	Empty unitList has sentinel *no units*
 	getTileResource returns 0 for all tiles except base
 	"Improvement already exists" instead of "Terraform complete"
 	Mouse movement (right click to move active unit, display path before release)
@@ -35,3 +34,4 @@ TODO
 	Multiplayer
 	Preload all files automatically
 	Modify interface mockup, implement blurred background effect, merge with prototype
+	Base control should display around base
