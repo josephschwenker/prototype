@@ -16,10 +16,12 @@ class Node {
 		this.turns = Infinity
 		this.parent = undefined
 	}
+	equals(n) {
+		return this.coordinates == n.coordinates
+	}
 }
 
 class Game {
-	
 	
 	#activePiece
 	
@@ -65,6 +67,7 @@ class Game {
 	constructor() {
 		// cannot initialize active until the map is rendered
 		this.cityNamesList = ["Alpha Prime", "Glorious Awakening", "New Inception", "Terra Nova"]
+		this.nodeMap
 		this.moving = false
 		this.turn = 0
 		this.unitList = []
@@ -234,7 +237,19 @@ class GameMap {
 		}
 	}
 	
-	getPath(source, destination) {
+	getPath(nodeGraph, destination) {
+		// follow predecessors
+		let path = []
+		let previous = nodeGraph[destination]
+		while (previous !== undefined) {
+			path.push(previous)
+			previous = previous.parent
+		}
+		path.reverse()
+		return path
+	}
+	
+	generateNodeGraph(source) {
 		// yay, graph theory
 		
 		// create a map from tile coordinates to graph nodes
@@ -243,17 +258,34 @@ class GameMap {
 		m[source].distance = 0
 		m[source].turns = 0
 		
-		let p = m[source]
+		let parentCoordinates = source
 		
-		let unvisited = [ p ]
+		// must store indices of nodes, not the nodes themselves
+		let unvisited = [ parentCoordinates ]
 		
-		while ( unvisited.length > 0 ) {
+		// prevent infinite loops
+		let max = 9999
+		let ticks = 0
+		
+		while ( unvisited.length > 0 && ticks<max ) {
+			ticks++
+			if (ticks === max) {
+				console.log(m)
+				throw new Error("generateNodeGraph exceeded its maximum running time")
+			}
+			// p is the node itself
+			let p = m[parentCoordinates]
 			// mark this node as visited and remove it from the list of unvisited nodes
 			p.visited = true
-			unvisited.removeLast(p)
+			unvisited.removeLast(parentCoordinates)
+			if ( unvisited.length > Math.pow(game.map.size, 2) ) {
+				console.log(unvisited)
+				throw new Error("Too many nodes")
+				break
+			}
 			
 			// get neighbors
-			let neighbors = game.map.getNeighbors(p.coordinates)
+			let neighbors = game.map.getNeighbors(parentCoordinates)
 			
 			// calculate new distance
 			let newDistance = p.distance + 1
@@ -313,18 +345,9 @@ class GameMap {
 					smallestNode = n
 				}
 			}
-			p = smallestNode
+			parentCoordinates = smallestNode
 		}
-		
-		// follow predecessors
-		let path = []
-		let previous = m[destination]
-		while (previous !== undefined) {
-			path.push(previous)
-			previous = previous.parent
-		}
-		path.reverse()
-		return path
+		return m
 	}
 }
 
@@ -1031,21 +1054,33 @@ function getUiTileByCoordinates(c) {
 
 /* UI FUNCTIONS */
 
-function showPath(e) {
-	// only show the path if the active piece is a unit (not a city)
-	if (game.active instanceof Unit && e.target.classList.contains("tile")) {
+function startMoving(e) {
+	console.log("startMoving...")
+	if (e.button === RIGHT_MOUSE_BUTTON && e.target.classList.contains("tile") && game.active !== undefined) {
+		game.moving = true
 		// get the source tile
+		let source = game.getActiveCoordinates()
+		// cache path
+		console.log("Generating node graph...")
+		game.nodeMap = game.map.generateNodeGraph(source)
+		console.log("Node graph done.")
+		previewMove(e)
+	}
+	console.log("startMoving done.")
+}
+
+function previewMove(e) {
+	// only show the path if the active piece is a unit (not a city)
+	if (game.active instanceof Unit && e.target.classList.contains("tile") && game.moving) {
+		// generate path
 		let source = game.getActiveCoordinates()
 		// get the destination tile
 		let destination = Tuple.parseTuple(e.target.id)
-		let path = game.map.getPath(source, destination)
-		console.log(path)
-		
+		let path = game.map.getPath(game.nodeMap, destination)
 		// draw path
 		render()
 		for (let p of path) {
 			let pathDiv = document.createElement("div")
-			// pathDiv.textContent = `t:${p.turns}\nd:${p.distance}\nv:${p.vector}\n`
 			pathDiv.classList.add("path")
 			getUiTileByCoordinates(p.coordinates).appendChild(pathDiv)
 		}
@@ -1053,7 +1088,28 @@ function showPath(e) {
 }
 
 function goTo(e) {
-	
+	if (game.moving) {
+		let target
+		for (let i of e.path) {
+			if (i.classList !== undefined && i.classList.contains("tile")) {
+				target = i
+			}
+		}
+		if (target !== undefined) {
+			let destination = Tuple.parseTuple(target.id)
+			// generate path
+			let path = game.map.getPath(game.nodeMap, destination)
+			// the first item on the path is the current tile, so skip it so we don't waste a move
+			for (let i=1; i<path.length; i++) {
+				game.active.moveTo(game.nodeMap[ path[i].coordinates ].coordinates)
+			}
+		}
+	}
+	if (game.moving) {
+		game.nodeMap = undefined
+		game.moving = false
+		render()
+	}
 }
 
 function queueProduction() {
@@ -1251,7 +1307,8 @@ function populateProductionMenu() {
 function initialize() {
 	let mapDiv = document.getElementById("map")
 	let z = 0
-	document.body.addEventListener("mousemove", showPath)
+	document.body.addEventListener("mousemove", previewMove)
+	document.body.addEventListener("mouseup", goTo)
 	for (let y=0; y<game.map.size; y++) {
 		let row = document.createElement("div")
 		row.id = "row" + y
@@ -1262,8 +1319,7 @@ function initialize() {
 			let tile = document.createElement("div")
 			tile.id = x + "," + y + "," + z
 			tile.className = "tile"
-			// tile.addEventListener("mousedown", () => (game.moving = true))
-			// tile.addEventListener("mouseup", () => (game.moving = false))
+			tile.addEventListener("mousedown", startMoving)
 			currentRow.appendChild(tile)
 		}
 	}
@@ -1386,7 +1442,7 @@ function render() {
 			if (tile.city != undefined) {
 				let city = document.createElement("div")
 				city.id = tile.city.id
-				city.onclick = onItemSelect
+				city.addEventListener("click", onItemSelect)
 				city.className = "city"
 				
 				let cityIcon = document.createElement("div")
@@ -1434,7 +1490,7 @@ function render() {
 					// render status abbreviation
 					unitLabel.textContent = currentUnit.status.abbreviation
 					
-					unitIcon.onclick = onItemSelect
+					unitIcon.addEventListener("click", onItemSelect)
 					
 					unit.appendChild(unitLabel)
 					unit.appendChild(unitIcon)

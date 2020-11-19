@@ -1,7 +1,6 @@
 TODO
-	Mouse movement (right click to move active unit, display path before release)
-	Improve performance of pathfinding
-	"Improvement already exists" instead of "Terraform complete"
+	Infinite loop when pathfinding on tiles other than (3, 3, 0)
+	Bug: "Improvement already exists" instead of "Terraform complete"
 	"Invalid command" when button/shortcut not valid
 	Should not play open base control sound if base control already open
 	Switch coordinates to x, y, z instead of z, y, x
