@@ -1,13 +1,13 @@
 TODO
 	Mouse movement (right click to move active unit, display path before release)
-		Prefer straight path
+	Improve performance of pathfinding
 	"Improvement already exists" instead of "Terraform complete"
 	"Invalid command" when button/shortcut not valid
 	Should not play open base control sound if base control already open
 	Switch coordinates to x, y, z instead of z, y, x
 	Structures of different classes can stack: ResourceStructure, MovementStructure, MilitaryStructure, ExtraResourceStructure
 	Replace structures array with pointer to a ResourceStructure
-	Convert to model-view-controller
+	Convert to model-view-controller (game.renderingPath)
 	Rectangular map (Civilization-style shape)
 	Verify multiple engineers aggregate work correctly
 		turns remaining should never be less than 1

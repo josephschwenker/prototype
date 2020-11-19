@@ -20,6 +20,7 @@ class Node {
 
 class Game {
 	
+	
 	#activePiece
 	
 	set active(piece) {
@@ -63,6 +64,8 @@ class Game {
 	
 	constructor() {
 		// cannot initialize active until the map is rendered
+		this.cityNamesList = ["Alpha Prime", "Glorious Awakening", "New Inception", "Terra Nova"]
+		this.moving = false
 		this.turn = 0
 		this.unitList = []
 		this.cityList = []
@@ -230,6 +233,99 @@ class GameMap {
 			}
 		}
 	}
+	
+	getPath(source, destination) {
+		// yay, graph theory
+		
+		// create a map from tile coordinates to graph nodes
+		let m = {}
+		m[source] = new Node(source)
+		m[source].distance = 0
+		m[source].turns = 0
+		
+		let p = m[source]
+		
+		let unvisited = [ p ]
+		
+		while ( unvisited.length > 0 ) {
+			// mark this node as visited and remove it from the list of unvisited nodes
+			p.visited = true
+			unvisited.removeLast(p)
+			
+			// get neighbors
+			let neighbors = game.map.getNeighbors(p.coordinates)
+			
+			// calculate new distance
+			let newDistance = p.distance + 1
+			
+			// add neighbors' distances to the hashmap
+			for (let n of neighbors) {
+				// add each neighbor to the hashmap if not already present
+				if ( m[n] == undefined ) {
+					m[n] = new Node(n)
+				}
+				n = m[n]
+				// check all unvisited neighbors
+				if ( !n.visited ) {
+					let newTurns = p.turns
+					// calculate this neighbor's vector
+					let newVector = n.coordinates.subtract(p.coordinates)
+					// calculate turns
+					if ( p.vector !== undefined ) {
+						// parent has a vector, so check if it matches the new one
+						if ( !newVector.equals(p.vector) ) {
+							// vectors do not equal, so increment turns
+							newTurns++
+						}
+					}
+					
+					if ( newDistance < n.distance ) {
+						// update distance
+						n.distance = newDistance
+						// update turns
+						n.turns = newTurns
+						// update vector
+						n.vector = newVector
+						// update parent
+						n.parent = p
+					}
+					else if ( newDistance == n.distance ) {
+						if ( newTurns < n.turns ) {
+							// skip updating distance since it is unchanged
+							// update turns
+							m[n].turns = newTurns
+							// update vector
+							n.vector = newVector
+							// update parent
+							n.parent = p
+						}
+					}
+					// add this node to the list of unvisited nodes
+					unvisited.push(n)
+				}
+			}
+			// choose the closest unvisited node for the next iteration
+			let smallestDistance = Infinity
+			let smallestNode
+			for (let n of unvisited) {
+				if (n.distance < smallestDistance) {
+					smallestDistance = n.distance
+					smallestNode = n
+				}
+			}
+			p = smallestNode
+		}
+		
+		// follow predecessors
+		let path = []
+		let previous = m[destination]
+		while (previous !== undefined) {
+			path.push(previous)
+			previous = previous.parent
+		}
+		path.reverse()
+		return path
+	}
 }
 
 class Piece {
@@ -316,10 +412,10 @@ class City extends Piece {
 		}
 	}
 	generateName() {
-		let i = Math.floor( Math.random()*cityNamesList.length )
-		let name = cityNamesList[i]
+		let i = Math.floor( Math.random()*game.cityNamesList.length )
+		let name = game.cityNamesList[i]
 		// remove name so it cannot be used again
-		cityNamesList.removeLast(name)
+		game.cityNamesList.removeLast(name)
 		this.fullName = name
 	}
 	getResourceTiles() {
@@ -796,7 +892,6 @@ class OpenOcean extends Tile {
 
 const MAPSIZE = 7
 let game = new Game()
-let cityNamesList = ["Alpha Prime", "Glorious Awakening", "New Inception", "Terra Nova"]
 
 /* SOUND SYSTEM */
 
@@ -938,106 +1033,16 @@ function getUiTileByCoordinates(c) {
 
 function showPath(e) {
 	// only show the path if the active piece is a unit (not a city)
-	if (e.button == RIGHT_MOUSE_BUTTON && game.active instanceof Unit) {
-		// calculate the path to the current tile
-		// yay, graph theory
-		
+	if (game.active instanceof Unit && e.target.classList.contains("tile")) {
 		// get the source tile
 		let source = game.getActiveCoordinates()
 		// get the destination tile
-		let destination = Tuple.parseTuple(e.currentTarget.id)
-		
-		// create a map from tile coordinates to graph nodes
-		let m = {}
-		m[source] = new Node(source)
-		m[source].distance = 0
-		m[source].turns = 0
-		
-		let p = m[source]
-		
-		let unvisited = [ p ]
-		
-		while ( unvisited.length > 0 ) {
-			// mark this node as visited and remove it from the list of unvisited nodes
-			p.visited = true
-			unvisited.removeLast(p)
-			
-			// get neighbors
-			let neighbors = game.map.getNeighbors(p.coordinates)
-			
-			// calculate new distance
-			let newDistance = p.distance + 1
-			
-			// add neighbors' distances to the hashmap
-			for (let n of neighbors) {
-				// add each neighbor to the hashmap if not already present
-				if ( m[n] == undefined ) {
-					m[n] = new Node(n)
-				}
-				n = m[n]
-				// check all unvisited neighbors
-				if ( !n.visited ) {
-					let newTurns = p.turns
-					// calculate this neighbor's vector
-					let newVector = n.coordinates.subtract(p.coordinates)
-					// calculate turns
-					if ( p.vector !== undefined ) {
-						// parent has a vector, so check if it matches the new one
-						if ( !newVector.equals(p.vector) ) {
-							// vectors do not equal, so increment turns
-							newTurns++
-						}
-					}
-					
-					if ( newDistance < n.distance ) {
-						// update distance
-						n.distance = newDistance
-						// update turns
-						n.turns = newTurns
-						// update vector
-						n.vector = newVector
-						// update parent
-						n.parent = p
-					}
-					else if ( newDistance == n.distance ) {
-						if ( newTurns < n.turns ) {
-							// skip updating distance since it is unchanged
-							// update turns
-							m[n].turns = newTurns
-							// update vector
-							n.vector = newVector
-							// update parent
-							n.parent = p
-						}
-					}
-					// add this node to the list of unvisited nodes
-					unvisited.push(n)
-				}
-			}
-			// choose the closest unvisited node for the next iteration
-			let smallestDistance = Infinity
-			let smallestNode
-			for (let n of unvisited) {
-				if (n.distance < smallestDistance) {
-					smallestDistance = n.distance
-					smallestNode = n
-				}
-			}
-			p = smallestNode
-		}
-		
-		// follow predecessors
-		let path = []
-		let previous = m[destination]
-		while (previous !== undefined) {
-			path.push(previous)
-			previous = previous.parent
-		}
-		path.reverse()
-		
-		render()
+		let destination = Tuple.parseTuple(e.target.id)
+		let path = game.map.getPath(source, destination)
+		console.log(path)
 		
 		// draw path
+		render()
 		for (let p of path) {
 			let pathDiv = document.createElement("div")
 			// pathDiv.textContent = `t:${p.turns}\nd:${p.distance}\nv:${p.vector}\n`
@@ -1246,6 +1251,7 @@ function populateProductionMenu() {
 function initialize() {
 	let mapDiv = document.getElementById("map")
 	let z = 0
+	document.body.addEventListener("mousemove", showPath)
 	for (let y=0; y<game.map.size; y++) {
 		let row = document.createElement("div")
 		row.id = "row" + y
@@ -1256,8 +1262,8 @@ function initialize() {
 			let tile = document.createElement("div")
 			tile.id = x + "," + y + "," + z
 			tile.className = "tile"
-			tile.addEventListener("mousedown", showPath)
-			tile.addEventListener("mouseup", goTo)
+			// tile.addEventListener("mousedown", () => (game.moving = true))
+			// tile.addEventListener("mouseup", () => (game.moving = false))
 			currentRow.appendChild(tile)
 		}
 	}
