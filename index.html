@@ -9,8 +9,8 @@
 		<audio id="audioPieces"></audio>
 		<audio id="audioInterface"></audio>
 		<audio id="audioMusic"></audio>
-		<div id="map">
-			
+		<div id="mapContainer">
+			<div id="map"></div>
 		</div>
 		<div id="baseControl">
 			<div id="closeBaseControl">x</div>
@@ -33,31 +33,35 @@
 				</fieldset>
 			</fieldset>
 		</div>
-		<div id="unitList"></div>
-		<div id="actionBar">
-			<button id="nextIdle">Wait (W)</button>
-			<button id="cancelOrders">Cancel Orders (C)</button>
-			<button id="buildCity">Build City (B)</button>
-			<button id="disband">Disband (D)</button>
-			<button id="hold">Hold (H)</button>
-			<button id="sentry">Sentry (L)</button>
-			<button id="buildFarm">Flotation Farm (F)</button>
-			<button id="buildSolar">Solar Array (S)</button>
+		<div id="bottomBar">
+			<div id="actionBar">
+				<button id="nextIdle">Wait (W)</button>
+				<button id="cancelOrders">Cancel Orders (C)</button>
+				<button id="buildCity">Build City (B)</button>
+				<button id="disband">Disband (D)</button>
+				<button id="hold">Hold (H)</button>
+				<button id="sentry">Sentry (L)</button>
+				<button id="buildFarm">Flotation Farm (F)</button>
+				<button id="buildSolar">Solar Array (S)</button>
+			</div>
+			<div id="statusBarUnitListContainer">
+				<div id="unitList"></div>
+				<div id="statusBar">
+					<div>Active:
+						<span id="activeLabel"></span>
+					</div>
+					<div>Status:
+						<span id="status"></span>
+					</div>
+					<div>Moves:
+						<span id="moves"></span>
+					</div>
+					<div>Turn:
+						<span id="turn"></span>
+					</div>
+				</div>
+			</div>
 			<button id="endTurn">End Turn (Enter)</button>
-		</div>
-		<div id="statusBar">
-			<div>Active:
-				<span id="activeLabel"></span>
-			</div>
-			<div>Status:
-				<span id="status"></span>
-			</div>
-			<div>Moves:
-				<span id="moves"></span>
-			</div>
-			<div>Turn:
-				<span id="turn"></span>
-			</div>
 		</div>
 	</body>
 	<script src="script.js"></script>
