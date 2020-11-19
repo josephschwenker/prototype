@@ -953,12 +953,14 @@ function showPath(e) {
 		m[source].distance = 0
 		m[source].turns = 0
 		
-		let queue = [ m[source] ]
-		while (queue.length !== 0) {
-			// pop the next item off the queue
-			let p = queue.pop()
-			// mark this node as visited
+		let p = m[source]
+		
+		let unvisited = [ p ]
+		
+		while ( unvisited.length > 0 ) {
+			// mark this node as visited and remove it from the list of unvisited nodes
 			p.visited = true
+			unvisited.removeLast(p)
 			
 			// get neighbors
 			let neighbors = game.map.getNeighbors(p.coordinates)
@@ -972,14 +974,12 @@ function showPath(e) {
 				if ( m[n] == undefined ) {
 					m[n] = new Node(n)
 				}
+				n = m[n]
 				// check all unvisited neighbors
-				if ( !m[n].visited ) {
-					// add all unvisited neighbors to the queue
-					queue.push(m[n])
-					
+				if ( !n.visited ) {
 					let newTurns = p.turns
 					// calculate this neighbor's vector
-					let newVector = m[n].coordinates.subtract(p.coordinates)
+					let newVector = n.coordinates.subtract(p.coordinates)
 					// calculate turns
 					if ( p.vector !== undefined ) {
 						// parent has a vector, so check if it matches the new one
@@ -989,29 +989,41 @@ function showPath(e) {
 						}
 					}
 					
-					if ( newDistance < m[n].distance ) {
+					if ( newDistance < n.distance ) {
 						// update distance
-						m[n].distance = newDistance
+						n.distance = newDistance
 						// update turns
-						m[n].turns = newTurns
+						n.turns = newTurns
 						// update vector
-						m[n].vector = newVector
+						n.vector = newVector
 						// update parent
-						m[n].parent = p
+						n.parent = p
 					}
-					else if ( newDistance == m[n].distance ) {
-						if ( newTurns < m[n].turns ) {
+					else if ( newDistance == n.distance ) {
+						if ( newTurns < n.turns ) {
 							// skip updating distance since it is unchanged
 							// update turns
 							m[n].turns = newTurns
 							// update vector
-							m[n].vector = newVector
+							n.vector = newVector
 							// update parent
-							m[n].parent = p
+							n.parent = p
 						}
 					}
+					// add this node to the list of unvisited nodes
+					unvisited.push(n)
 				}
 			}
+			// choose the closest unvisited node for the next iteration
+			let smallestDistance = Infinity
+			let smallestNode
+			for (let n of unvisited) {
+				if (n.distance < smallestDistance) {
+					smallestDistance = n.distance
+					smallestNode = n
+				}
+			}
+			p = smallestNode
 		}
 		
 		// follow predecessors
@@ -1024,14 +1036,6 @@ function showPath(e) {
 		path.reverse()
 		
 		render()
-		
-		// draw map
-		for ( let p of Object.values(m) ) {
-			let pathDiv = document.createElement("div")
-			pathDiv.textContent = `t:${p.turns}\nd:${p.distance}\nv:${p.vector}\n`
-			pathDiv.classList.add("pathDebugging")
-			getUiTileByCoordinates(p.coordinates).appendChild(pathDiv)
-		}
 		
 		// draw path
 		for (let p of path) {

@@ -328,13 +328,6 @@
 		background: lightgreen;
 		transform: rotate(-45deg) scaleY(2) translateY(-25%);
 	}
-	
-	.pathDebugging {
-		color: white;
-		transform: rotate(-45deg) scaleY(2) translateY(-25%);
-		position: relative;
-		z-index: 1;
-	}
 
 /* WIDGETS */
 
