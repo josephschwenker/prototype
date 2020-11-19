@@ -6,6 +6,16 @@ const RIGHT_MOUSE_BUTTON = 2
 
 // classes
 
+// used for storing tile coordinates for pathfinding
+class Node {
+	constructor(coordinates) {
+		this.coordinates = coordinates
+		this.visited = false
+		this.distance = Infinity
+		this.parent = undefined
+	}
+}
+
 class Game {
 	
 	#activePiece
@@ -925,101 +935,67 @@ function showPath(e) {
 	if (e.button == RIGHT_MOUSE_BUTTON && game.active instanceof Unit) {
 		// calculate the path to the current tile
 		// yay, graph theory
+		
 		// get the source tile
 		let source = game.getActiveCoordinates()
 		// get the destination tile
-		let id = e.currentTarget.id
-		let array = id.split(",")
-		let destination = Tuple.parseTuple(id)
+		let destination = Tuple.parseTuple(e.currentTarget.id)
 		
-		// calculate path from source to destination
+		// create a map from tile coordinates to graph nodes
+		let m = new Map()
+		m[source] = new Node(source)
+		m[source].distance = 0
 		
-		// store distances in a hashmap
-		let distances = new Map()
-		// store visited boolean in a hashmap
-		let visited = new Map()
-		// store predecessors in a hashmap
-		let predecessors = new Map()
-		
-		// initialize source distance to 0
-		distances.set(
-			source.toString(),
-			0
-		)
-		let queue = []
-		queue.push(source)
-		while (queue.length != 0) {
+		let queue = [ m[source] ]
+		while (queue.length !== 0) {
 			// pop the next item off the queue
 			let p = queue.pop()
 			// mark this node as visited
-			visited.set(
-				p.toString(),
-				true
-			)
+			p.visited = true
 			
 			// get neighbors
-			let neighbors = game.map.getNeighbors(p)
+			let neighbors = game.map.getNeighbors(p.coordinates)
 			
 			// calculate new distance
-			let newDistance = distances.get( p.toString() ) + 1
-			// keep track of smallest value
-			let smallestValue = Infinity
-			let smallestNode
+			let newDistance = p.distance + 1
 			
 			// add neighbors' distances to the hashmap
 			for (let n of neighbors) {
+				// add each neighbor to the hashmap if not already present
+				if ( m[n] == undefined ) {
+					m[n] = new Node(n)
+				}
 				// check all unvisited neighbors
-				if ( visited.get( n.toString() ) != true ) {
-					// get smallest distance
-					if ( newDistance < smallestValue ) {
-						smallestValue = newDistance
-						smallestNode = n
-					}
+				if ( !m[n].visited ) {
+					// add all unvisited neighbors to the queue
+					queue.push(m[n])
 					// get current distance
-					let oldDistance = distances.get(
-						n.toString()
-					)
-					// change undefined to Infinity so Math.min does not return NaN
-					if ( oldDistance == undefined ) {
-						oldDistance = Infinity
-					}
-					
+					let oldDistance = m[n].distance
 					if ( newDistance < oldDistance ) {
 						// update distance
-						distances.set(
-							n.toString(),
-							newDistance
-						)
-						// update predecessor
-						predecessors.set(
-							n.toString(),
-							p.toString()
-						)
+						m[n].distance = newDistance
+						// update parent
+						m[n].parent = p
 					}
 				}
 			}
-			// add node with lowest distance to the queue
-			if ( smallestNode != undefined ) {
-				queue.push(smallestNode)
-			}
 		}
+		
 		// follow predecessors
 		let path = []
-		let next =  destination.toString()
-		while (true) {
-			path.push(next)
-			next = predecessors.get( next.toString() )
-			if ( next == undefined ) {
-				break
-			}
+		let previous = m[destination]
+		while (previous !== undefined) {
+			path.push(previous)
+			previous = previous.parent
 		}
+		path.reverse()
+		
 		// draw path
 		render()
 		for (let p of path) {
 			let pathDiv = document.createElement("div")
 			pathDiv.classList.add("path")
-			console.log(p)
-			getUiTileByCoordinates( Tuple.parseTuple(p) ).appendChild(pathDiv)
+			getUiTileByCoordinates(p.coordinates).appendChild(pathDiv)
 		}
 	}
 }
