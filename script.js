@@ -344,16 +344,16 @@ class City extends Piece {
 		return resourceTiles
 	}
 	// holy dooly folks, this is a big one
-	getTileResource(t, resource) {
-		if ( game.map.tileExists(t) ) {
-			// t is the coordinates of the tile we are getting resource values for
+	getTileResource(c, resource) {
+		if ( game.map.tileExists(c) ) {
+			// c is the coordinates of the tile we are getting resource values for
 			// get resources before modifiers
-			let output = game.map.getTile(t)[resource]
-			// cc is city coordinates
+			let output = game.map.getTile(c)[resource]
+			// cc is the coordinates of the corresponding city for this tile
 			let cc = game.map.getCoordinatesByItemId(this.id)
 			
 			// city tile, no structures allowed
-			if ( cc.equals(t) ) {
+			if ( cc.equals(c) ) {
 				// look through facilities instead
 				
 				// if Industrial Base, max(2, output)
@@ -368,17 +368,17 @@ class City extends Piece {
 			// non-base tile, use standard calculation
 			else {
 				// apply modifiers from structures, if any
-				let structures = game.map.getTile(cc).structures
-				// missing flotation farm
+				let structures = game.map.getTile(c).structures
+				// flotation farm
 				if (resource == "food") {
-					if ( structures.find( i => i instanceof FlotationFarm) == undefined ) {
-						output = 0
+					if ( structures.find( i => i instanceof FlotationFarm) !== undefined ) {
+						output += 1
 					}
 				}
-				// missing solar array
+				// solar array
 				if (resource == "credits") {
-					if ( structures.find( i => i instanceof SolarArray) == undefined ) {
-						output = 0
+					if ( structures.find( i => i instanceof SolarArray) !== undefined ) {
+						output += 1
 					}
 				}
 			}
@@ -741,6 +741,7 @@ class Tile {
 class Structure {
 	constructor() {
 		this.progress = 0
+		this.id = game.nextId++
 	}
 }
 
@@ -1098,7 +1099,7 @@ function cancelOrders() {
 
 function buildCity() {
 	// if a piece is selected and this piece can build a city
-	if (game.active != undefined && game.active.buildCity !== undefined) {
+	if (game.active !== undefined && game.active.buildCity !== undefined) {
 		game.active.buildCity()
 	}
 }
@@ -1106,22 +1107,22 @@ function buildCity() {
 function buildFarm() {
 	if (game.active instanceof EngineerSkimmer) {
 		game.active.terraform(FlotationFarm)
+		nextIdle()
 	}
-	nextIdle()
 }
 
 function buildSolar() {
 	if (game.active instanceof EngineerSkimmer) {
 		game.active.terraform(SolarArray)
+		nextIdle()
 	}
-	nextIdle()
 }
 
 function disband() {
 	if (game.active.disband !== undefined) {
 		game.active.disband()
+		nextIdle()
 	}
-	nextIdle()
 }
 
 function endTurn() {
@@ -1423,11 +1424,13 @@ function render() {
 /* MAIN */
 
 // push starting units
-game.map.getTile( new Tuple(3, 3, 0) ).units.push( new PodSkimmer(), new EngineerSkimmer() )
-game.unitList.push(
-	game.map.getTile( new Tuple(3, 3, 0) ).units[0],
-	game.map.getTile( new Tuple(3, 3, 0) ).units[1]
+game.map.getTile( new Tuple(3, 3, 0) ).units.push(
+	new PodSkimmer(),
+	new EngineerSkimmer(),
 )
+for ( let u of game.map.getTile( new Tuple(3, 3, 0) ).units ) {
+	game.unitList.push(u)
+}
 
 // begin
 initialize()

@@ -1,12 +1,15 @@
 TODO
-	getTileResource returns 0 for all tiles except base
 	"Improvement already exists" instead of "Terraform complete"
+	"Invalid command" when button/shortcut not valid
+	Should not play open base control sound if base control already open
+	Switch coordinates to x, y, z instead of z, y, x
+	Structures of different classes can stack: ResourceStructure, MovementStructure, MilitaryStructure, ExtraResourceStructure
+	Replace structures array with pointer to a ResourceStructure
 	Mouse movement (right click to move active unit, display path before release)
 		Fix bug where entire path is not shown for some destinations
 		Prefer straight path
 	Convert to model-view-controller
 	Rectangular map (Civilization-style shape)
-	Switch coordinates to x, y, z instead of z, y, x
 	Verify multiple engineers aggregate work correctly
 		turns remaining should never be less than 1
 		make totalProgress a static variable of the class
@@ -14,8 +17,6 @@ TODO
 		moving an engineer revokes its assignment
 	Prohibit bases from harvesting the same resource tiles, oldest base takes precedence
 	Show outline of base radius before confirming build
-	Structures of different classes can stack: ResourceStructure, MovementStructure, MilitaryStructure, ExtraResourceStructure
-	Replace structures array with pointer to a ResourceStructure
 	Show message log: population growth, production complete, terraform complete, structure already exists, etc.
 	Population growth
 	Accumulate nutrients/credits/minerals
