@@ -258,37 +258,38 @@ class GameMap {
 		m[source].distance = 0
 		m[source].turns = 0
 		
-		let parentCoordinates = source
+		let currentNode = m[source]
 		
 		// must store indices of nodes, not the nodes themselves
-		let unvisited = [ parentCoordinates ]
+		let unvisited = new Set()
+		unvisited.add(currentNode.coordinates)
 		
 		// prevent infinite loops
 		let max = 9999
 		let ticks = 0
 		
-		while ( unvisited.length > 0 && ticks<max ) {
+		while ( unvisited.size > 0 && ticks<max ) {
+			
 			ticks++
 			if (ticks === max) {
 				console.log(m)
 				throw new Error("generateNodeGraph exceeded its maximum running time")
 			}
-			// p is the node itself
-			let p = m[parentCoordinates]
+			
 			// mark this node as visited and remove it from the list of unvisited nodes
-			p.visited = true
-			unvisited.removeLast(parentCoordinates)
-			if ( unvisited.length > Math.pow(game.map.size, 2) ) {
+			currentNode.visited = true
+			unvisited.delete(currentNode.coordinates)
+			if ( unvisited.size > Math.pow(game.map.size, 2) ) {
 				console.log(unvisited)
 				throw new Error("Too many nodes")
 				break
 			}
 			
 			// get neighbors
-			let neighbors = game.map.getNeighbors(parentCoordinates)
+			let neighbors = game.map.getNeighbors(currentNode.coordinates)
 			
 			// calculate new distance
-			let newDistance = p.distance + 1
+			let newDistance = currentNode.distance + 1
 			
 			// add neighbors' distances to the hashmap
 			for (let n of neighbors) {
@@ -299,19 +300,19 @@ class GameMap {
 				n = m[n]
 				// check all unvisited neighbors
 				if ( !n.visited ) {
-					let newTurns = p.turns
+					let newTurns = currentNode.turns
 					// calculate this neighbor's vector
-					let newVector = n.coordinates.subtract(p.coordinates)
+					let newVector = n.coordinates.subtract(currentNode.coordinates)
 					// calculate turns
-					if ( p.vector !== undefined ) {
+					if ( currentNode.vector !== undefined ) {
 						// parent has a vector, so check if it matches the new one
-						if ( !newVector.equals(p.vector) ) {
+						if ( !newVector.equals(currentNode.vector) ) {
 							// vectors do not equal, so increment turns
 							newTurns++
 						}
 					}
 					
-					if ( newDistance < n.distance ) {
+					if ( newDistance < n.distance || ( newDistance == n.distance && newTurns < n.turns ) ) {
 						// update distance
 						n.distance = newDistance
 						// update turns
@@ -319,33 +320,23 @@ class GameMap {
 						// update vector
 						n.vector = newVector
 						// update parent
-						n.parent = p
-					}
-					else if ( newDistance == n.distance ) {
-						if ( newTurns < n.turns ) {
-							// skip updating distance since it is unchanged
-							// update turns
-							m[n].turns = newTurns
-							// update vector
-							n.vector = newVector
-							// update parent
-							n.parent = p
-						}
+						n.parent = currentNode
 					}
 					// add this node to the list of unvisited nodes
-					unvisited.push(n)
+					unvisited.add(n.coordinates)
 				}
 			}
 			// choose the closest unvisited node for the next iteration
 			let smallestDistance = Infinity
 			let smallestNode
 			for (let n of unvisited) {
-				if (n.distance < smallestDistance) {
-					smallestDistance = n.distance
-					smallestNode = n
+				let candidateNode = m[n]
+				if (candidateNode.distance < smallestDistance) {
+					smallestDistance = candidateNode.distance
+					smallestNode = candidateNode
 				}
 			}
-			parentCoordinates = smallestNode
+			currentNode = smallestNode
 		}
 		return m
 	}
