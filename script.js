@@ -770,9 +770,9 @@ class OpenOcean extends Tile {
 		super()
 		this.name = "Open Ocean"
 		this.shortName = "openOcean"
-		this.food = 2
+		this.food = 1
 		this.minerals = 0
-		this.credits = 4
+		this.credits = 2
 	}
 }
 
