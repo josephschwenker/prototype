@@ -1,6 +1,5 @@
 TODO
 	Mouse movement (right click to move active unit, display path before release)
-		Fix bug where entire path is not shown for some destinations
 		Prefer straight path
 	"Improvement already exists" instead of "Terraform complete"
 	"Invalid command" when button/shortcut not valid

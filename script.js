@@ -12,6 +12,8 @@ class Node {
 		this.coordinates = coordinates
 		this.visited = false
 		this.distance = Infinity
+		this.vector = undefined
+		this.turns = Infinity
 		this.parent = undefined
 	}
 }
@@ -95,15 +97,19 @@ class Tuple {
 	equals(tuple) {
 		if (
 			tuple instanceof Tuple &&
-			this.x == tuple.x &&
-			this.y == tuple.y &&
-			this.z == tuple.z
+			this.x === tuple.x &&
+			this.y === tuple.y &&
+			this.z === tuple.z
 		) {
 			return true;
 		}
 		else {
 			return false
 		}
+	}
+	
+	subtract(t) {
+		return new Tuple(this.x - t.x, this.y-t.y, this.z - t.z)
 	}
 }
 
@@ -942,9 +948,10 @@ function showPath(e) {
 		let destination = Tuple.parseTuple(e.currentTarget.id)
 		
 		// create a map from tile coordinates to graph nodes
-		let m = new Map()
+		let m = {}
 		m[source] = new Node(source)
 		m[source].distance = 0
+		m[source].turns = 0
 		
 		let queue = [ m[source] ]
 		while (queue.length !== 0) {
@@ -969,13 +976,39 @@ function showPath(e) {
 				if ( !m[n].visited ) {
 					// add all unvisited neighbors to the queue
 					queue.push(m[n])
-					// get current distance
-					let oldDistance = m[n].distance
-					if ( newDistance < oldDistance ) {
+					
+					let newTurns = p.turns
+					// calculate this neighbor's vector
+					let newVector = m[n].coordinates.subtract(p.coordinates)
+					// calculate turns
+					if ( p.vector !== undefined ) {
+						// parent has a vector, so check if it matches the new one
+						if ( !newVector.equals(p.vector) ) {
+							// vectors do not equal, so increment turns
+							newTurns++
+						}
+					}
+					
+					if ( newDistance < m[n].distance ) {
 						// update distance
 						m[n].distance = newDistance
+						// update turns
+						m[n].turns = newTurns
+						// update vector
+						m[n].vector = newVector
 						// update parent
 						m[n].parent = p
+					}
+					else if ( newDistance == m[n].distance ) {
+						if ( newTurns < m[n].turns ) {
+							// skip updating distance since it is unchanged
+							// update turns
+							m[n].turns = newTurns
+							// update vector
+							m[n].vector = newVector
+							// update parent
+							m[n].parent = p
+						}
 					}
 				}
 			}
@@ -990,10 +1023,20 @@ function showPath(e) {
 		}
 		path.reverse()
 		
-		// draw path
 		render()
+		
+		// draw map
+		for ( let p of Object.values(m) ) {
+			let pathDiv = document.createElement("div")
+			pathDiv.textContent = `t:${p.turns}\nd:${p.distance}\nv:${p.vector}\n`
+			pathDiv.classList.add("pathDebugging")
+			getUiTileByCoordinates(p.coordinates).appendChild(pathDiv)
+		}
+		
+		// draw path
 		for (let p of path) {
 			let pathDiv = document.createElement("div")
+			// pathDiv.textContent = `t:${p.turns}\nd:${p.distance}\nv:${p.vector}\n`
 			pathDiv.classList.add("path")
 			getUiTileByCoordinates(p.coordinates).appendChild(pathDiv)
 		}
