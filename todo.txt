@@ -1,13 +1,60 @@
 TODO
-	Infinite loop when pathfinding on tiles other than (3, 3, 0)
+	Hide action bar options that are not available
+	Approach A:
+		Hard-code all possible actions in the action bar, then set visible only those that meet hard-coded criteria
+		Advantages: can specify order easily
+		Disadvantages: need to manually update interface to show new action buttons, have to code criteria for each button
+	Approach B:
+		Create actionBar variable that stores all possible buttons. Each button is an object with a function that determines when it will be visible.
+		Advantages: Cleaner code
+		Disadvantages: Code redundancy when new actions are added to the game. Would need separate logic for keyboard shortcuts.
+	Approach C:
+		Create class Action. Every action in the game is an instance of that action with a corresponding function and code that determines when the action will be available.
+		Advantages: Cleanest code of the three options, could include a field in the class that specifies order of the buttons.
+		Disadvantages: Virtual actions, like "wait/next unit" that should always be visible could be difficult to implement. Would still need a global list of all possible actions.
+		
+		View.actionButtons = [NextUnit]
+		class EngineerSkimmer extends Unit {
+			class Disband extends Action {
+				isAvailable() {
+				
+				}
+			}
+			actions: []
+		}
+		class Action: contains function to be executed and logic for when it will be available
+			class CancelOrders extends Action {
+				actionBarIndex: 0
+				shortcut: ""
+				
+				isAvailable() {
+					return false
+				}
+				do() {
+					if ( this.isAvailable() ) {
+						// logic here
+					}
+					else {
+						// play invalid command
+					}
+				}
+			}
+		"Invalid command" when button/shortcut not valid
+	Rectangular map (Civilization-style shape)
+	When game.moving, hovering over the source tile still shows the last path
+	Show number of moves remaining when using mouse movement
+		Tiles out of range show up red
+		Queue moves for next turn
+	Switch to VS Code
+	Slight delay between moving units between tiles when using mouse movement
+	Slide units from one tile to the next when moving (position: absolute)
+	Replace structures array with pointer to a ResourceStructure
 	Bug: "Improvement already exists" instead of "Terraform complete"
-	"Invalid command" when button/shortcut not valid
 	Should not play open base control sound if base control already open
 	Switch coordinates to x, y, z instead of z, y, x
 	Structures of different classes can stack: ResourceStructure, MovementStructure, MilitaryStructure, ExtraResourceStructure
-	Replace structures array with pointer to a ResourceStructure
 	Convert to model-view-controller (game.renderingPath)
-	Rectangular map (Civilization-style shape)
+	Convert to TypeScript
 	Verify multiple engineers aggregate work correctly
 		turns remaining should never be less than 1
 		make totalProgress a static variable of the class
@@ -17,6 +64,7 @@ TODO
 	Show outline of base radius before confirming build
 	Show message log: population growth, production complete, terraform complete, structure already exists, etc.
 	Population growth
+	Base radius grows with population
 	Accumulate nutrients/credits/minerals
 	Research
 	Society modules

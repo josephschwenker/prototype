@@ -904,7 +904,7 @@ class OpenOcean extends Tile {
 
 // global variables
 
-const MAPSIZE = 7
+const MAPSIZE = 10
 let game = new Game()
 
 /* SOUND SYSTEM */
@@ -1046,18 +1046,14 @@ function getUiTileByCoordinates(c) {
 /* UI FUNCTIONS */
 
 function startMoving(e) {
-	console.log("startMoving...")
 	if (e.button === RIGHT_MOUSE_BUTTON && e.target.classList.contains("tile") && game.active !== undefined) {
 		game.moving = true
 		// get the source tile
 		let source = game.getActiveCoordinates()
 		// cache path
-		console.log("Generating node graph...")
 		game.nodeMap = game.map.generateNodeGraph(source)
-		console.log("Node graph done.")
 		previewMove(e)
 	}
-	console.log("startMoving done.")
 }
 
 function previewMove(e) {
@@ -1412,6 +1408,79 @@ function renderUnitList() {
 	}
 }
 
+function renderActionBar() {
+	console.log(game.active)
+	let actionBar = document.getElementById("actionBar")
+	// hide actions that are not available
+	for (let e of actionBar.children) {
+		switch (e.id) {
+			case "nextIdle":
+				if (game.active !== undefined && game.active instanceof Unit) {
+					e.style.display = ""
+				}
+				else {
+					e.style.display = "none"
+				}
+
+				break
+			case "cancelOrders":
+				if (game.active !== undefined && game.active instanceof Unit) {
+					e.style.display = ""
+				}
+				else {
+					e.style.display = "none"
+				}
+				break
+			case "buildCity":
+				if (game.active !== undefined && game.active.buildCity !== undefined ) {
+					e.style.display = ""
+				}
+				else {
+					e.style.display = "none"
+				}
+				break
+			case "disband":
+				if (game.active !== undefined && game.active instanceof Unit) {
+					e.style.display = ""
+				}
+				else {
+					e.style.display = "none"
+				}
+				break
+			case "hold":
+				if (game.active !== undefined && game.active instanceof Unit) {
+					e.style.display = ""
+				}
+				else {
+					e.style.display = "none"
+				}
+			case "sentry":
+				if (game.active !== undefined && game.active instanceof Unit) {
+					e.style.display = ""
+				}
+				else {
+					e.style.display = "none"
+				}
+				break
+			case "buildFarm":
+				if (game.active !== undefined && game.active instanceof EngineerSkimmer) {
+					e.style.display = ""
+				}
+				else {
+					e.style.display = "none"
+				}
+			case "buildSolar":
+				if (game.active !== undefined && game.active instanceof EngineerSkimmer) {
+					e.style.display = ""
+				}
+				else {
+					e.style.display = "none"
+				}
+		}
+	}
+	
+}
+
 function render() {
 	let mapDiv = document.getElementById("map")
 	let z = 0;
@@ -1493,6 +1562,8 @@ function render() {
 	}
 	// apply active style
 	renderActive()
+	// render action bar
+	renderActionBar()
 	// render unit list
 	renderUnitList()
 }
