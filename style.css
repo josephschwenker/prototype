@@ -324,8 +324,16 @@
 		width: 20px;
 		height: 20px;
 		position: absolute;
-		background: lightgreen;
+		background: red;
 		transform: rotate(-45deg) scaleY(2) translateY(-25%);
+		border-radius: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	
+	.path.reachable {
+		background: lightgreen;
 	}
 
 /* WIDGETS */

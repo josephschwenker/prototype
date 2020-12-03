@@ -1,8 +1,11 @@
 TODO
-b	When game.moving, hovering over the source tile still shows the last path
 	Show number of moves remaining when using mouse movement
-		Tiles out of range show up red
 		Queue moves for next turn
+			(easier) Do not store path, just recompute the shortest path?
+			OR
+			Store the computed path?
+		Show lines?
+	When game.moving, hovering over the source tile still shows the last path
 	Switch to VS Code
 	Slight delay between moving units between tiles when using mouse movement
 	Slide units from one tile to the next when moving (position: absolute)
@@ -18,6 +21,7 @@ b	When game.moving, hovering over the source tile still shows the last path
 		make totalProgress a static variable of the class
 		un-assign all assigned units when one unit finishes production
 		moving an engineer revokes its assignment
+	Should not be able to "overwrite" city by building one on an existing one
 	Prohibit bases from harvesting the same resource tiles, oldest base takes precedence
 	Show outline of base radius before confirming build
 	Show message log: population growth, production complete, terraform complete, structure already exists, etc.

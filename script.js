@@ -25,14 +25,16 @@ class Node {
 
 // Action specifies a command a user can carry out by clicking a button or pressing a keyboard shortcut
 class Action {
-	static name = ""
-	static actionBarIndex = 0
-	static shortcut = ""
+	constructor() {
+		this.name = ""
+		this.actionBarIndex = 0
+		this.shortcut = ""
+	}
 	
-	static isAvailable = function() {
+	isAvailable = function() {
 		return false
 	}
-	static do = function() {
+	do = function() {
 		if ( this.isAvailable() ) {
 			
 		}
@@ -850,6 +852,7 @@ class Unit extends Piece {
 		this.maxHealth = 0
 		this.upkeep = 0
 		this.available = true
+		this.moveTarget
 	}
 	
 	resetMoves() {
@@ -858,6 +861,7 @@ class Unit extends Piece {
 			this.status = status.idle
 		}
 	}
+	
 	moveTo(c) {
 		if ( this.currentMoves >= 1 && game.map.tileExists(c) ) {
 			let targetTile = game.map.getTile(c)
@@ -1105,7 +1109,7 @@ document.getElementById("closeBaseControl").onclick = closeBaseControl
 // change production
 document.getElementById("productionMenu").onchange = queueProduction
 
-document.getElementById("endTurn").onclick = endTurn
+document.getElementById("endTurn").onclick = actions.endTurn.do
 
 function onItemSelect(e) {
 	game.active = game.map.getItemById(e.target.parentElement.id)
@@ -1244,6 +1248,10 @@ function previewMove(e) {
 		for (let p of path) {
 			let pathDiv = document.createElement("div")
 			pathDiv.classList.add("path")
+			pathDiv.textContent = p.distance
+			if (p.distance <= game.active.currentMoves) {
+				pathDiv.classList.add("reachable")
+			}
 			getUiTileByCoordinates(p.coordinates).appendChild(pathDiv)
 		}
 	}
@@ -1540,7 +1548,6 @@ function renderUnitList() {
 
 function initializeActionBar() {
 	let actionBar = document.getElementById("actionBar")
-		// render actions
 	for (let a in actions) {
 		let b = document.createElement("button")
 		b.textContent = `${actions[a].name} (${actions[a].shortcut})`
