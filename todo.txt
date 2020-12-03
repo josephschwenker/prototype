@@ -1,6 +1,5 @@
 TODO
-	Rectangular map (Civilization-style shape)
-	When game.moving, hovering over the source tile still shows the last path
+b	When game.moving, hovering over the source tile still shows the last path
 	Show number of moves remaining when using mouse movement
 		Tiles out of range show up red
 		Queue moves for next turn
@@ -9,7 +8,6 @@ TODO
 	Slide units from one tile to the next when moving (position: absolute)
 	Replace structures array with pointer to a ResourceStructure
 	Bug: "Improvement already exists" instead of "Terraform complete"
-	Should not play open base control sound if base control already open
 	Make actions and status variables on the Game object
 	Switch coordinates to x, y, z instead of z, y, x
 	Structures of different classes can stack: ResourceStructure, MovementStructure, MilitaryStructure, ExtraResourceStructure

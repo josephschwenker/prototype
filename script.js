@@ -1122,7 +1122,7 @@ onkeydown = function(e) {
 			actions.endTurn.do()
 			break
 		case "w":
-			actions.nextIdle.do()
+			actions.nextUnit.do()
 			break
 	}
 	if (game.active != undefined) {
@@ -1286,29 +1286,33 @@ function queueProduction() {
 }
 
 function openBaseControl() {
-	game.baseControlOpen = true
-	render()
-	document.getElementById("cityName").textContent = game.active.fullName
-	game.active.drawResources()
-	document.getElementById("food").textContent = game.active.getTotalResource("food")
-	document.getElementById("minerals").textContent = game.active.getTotalResource("minerals")
-	document.getElementById("credits").textContent = game.active.getTotalResource("credits")
-	populateProductionMenu()
-	populateFacilityList()
-	populateProductionQueue()
-	// show base control screen
-	document.getElementById("baseControl").style.display = "inline-block"
-	// play sound
-	play("sound/menu2.wav")
+	if ( !game.baseControlOpen ) {
+		game.baseControlOpen = true
+		render()
+		document.getElementById("cityName").textContent = game.active.fullName
+		game.active.drawResources()
+		document.getElementById("food").textContent = game.active.getTotalResource("food")
+		document.getElementById("minerals").textContent = game.active.getTotalResource("minerals")
+		document.getElementById("credits").textContent = game.active.getTotalResource("credits")
+		populateProductionMenu()
+		populateFacilityList()
+		populateProductionQueue()
+		// show base control screen
+		document.getElementById("baseControl").style.display = "inline-block"
+		// play sound
+		play("sound/menu2.wav")
+	}
 }
 
 function closeBaseControl() {
-	game.baseControlOpen = false
-	game.active = undefined
-	render()
-	document.getElementById("baseControl").style.display = "none"
-	// play sound
-	play("sound/menu down.wav")
+	if ( game.baseControlOpen ) {
+		game.baseControlOpen = false
+		game.active = undefined
+		render()
+		document.getElementById("baseControl").style.display = "none"
+		// play sound
+		play("sound/menu down.wav")
+	}
 }
 
 function nextIdle() {
