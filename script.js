@@ -4,7 +4,7 @@
 
 const RIGHT_MOUSE_BUTTON = 2
 const PRODUCTION_COMPLETE = "sound/cpu prod complete.wav"
-const INVALID_COMMAND = "sound/ cpu invalid command.wav"
+const INVALID_COMMAND = "sound/cpu invalid command.wav"
 
 // classes
 
@@ -956,7 +956,7 @@ class EngineerSkimmer extends Unit {
 		this.maxHealth = 10
 		this.assignedTo = undefined
 		this.sound = "sound/ship.wav"
-		this.actions = [ new Terraform(FlotationFarm), new Terraform(SolarArray) ]
+		this.actions.push( new Terraform(FlotationFarm), new Terraform(SolarArray) )
 	}
 	aggregateStatus = function() {
 		let currentStructure = this.assignedTo
