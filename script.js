@@ -1414,6 +1414,7 @@ function populateProductionMenu() {
 }
 
 function initialize() {
+	initializeActionBar()
 	let mapDiv = document.getElementById("map")
 	let z = 0
 	document.body.addEventListener("mousemove", previewMove)
@@ -1533,21 +1534,29 @@ function renderUnitList() {
 	}
 }
 
-function renderActionBar() {
+function initializeActionBar() {
 	let actionBar = document.getElementById("actionBar")
-	// clear existing actions
-	while (actionBar.firstChild) {
-		actionBar.removeChild(actionBar.firstChild)
+		// render actions
+	for (let a in actions) {
+		let b = document.createElement("button")
+		b.textContent = `${actions[a].name} (${actions[a].shortcut})`
+		b.id = a
+		b.addEventListener("click", actions[a].do)
+		actionBar.appendChild(b)
 	}
-	// render actions
+	renderActionBar()
+}
+
+function renderActionBar() {
 	for (let a in actions) {
 		if ( actions[a].isAvailable() ) {
-			let b = document.createElement("button")
-			b.textContent = `${actions[a].name} (${actions[a].shortcut})`
-			b.addEventListener("click", actions[a].do)
-			actionBar.appendChild(b)
+			document.getElementById(a).style.display = ""
+		}
+		else {
+			document.getElementById(a).style.display = "none"
 		}
 	}
+
 }
 
 function render() {
