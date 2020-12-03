@@ -3,10 +3,12 @@
 // constants
 
 const RIGHT_MOUSE_BUTTON = 2
+const PRODUCTION_COMPLETE = "sound/cpu prod complete.wav"
+const INVALID_COMMAND = "sound/ cpu invalid command.wav"
 
 // classes
 
-// used for storing tile coordinates for pathfinding
+// Node represents a node used for storing tile coordinates for pathfinding
 class Node {
 	constructor(coordinates) {
 		this.coordinates = coordinates
@@ -21,19 +23,199 @@ class Node {
 	}
 }
 
+// Action specifies a command a user can carry out by clicking a button or pressing a keyboard shortcut
+class Action {
+	static name = ""
+	static actionBarIndex = 0
+	static shortcut = ""
+	
+	static isAvailable = function() {
+		return false
+	}
+	static do = function() {
+		if ( this.isAvailable() ) {
+			
+		}
+		else {
+			
+		}
+	}
+}
+
+// actions stores all possible actions
+let actions = {}
+
+// nextUnit
+	actions.nextUnit = new Action()
+	actions.nextUnit.name = "Next Unit"
+	actions.nextUnit.shortcut = "w"
+	actions.nextUnit.actionBarIndex = 0
+	actions.nextUnit.isAvailable = function() {
+		return true
+	}
+	actions.nextUnit.do = function() {
+		if ( actions.nextUnit.isAvailable() ) {
+			nextIdle()
+		}
+		else {
+			
+		}
+	}
+
+// endTurn
+	actions.endTurn = new Action()
+	actions.endTurn.name = "End Turn"
+	actions.endTurn.shortcut = "Enter"
+	actions.endTurn.actionBarIndex = 0
+	actions.endTurn.isAvailable = function() {
+		if ( !(game.active instanceof City) ) {
+			return false
+		}
+		else {
+			return false
+		}
+	}
+	actions.endTurn.do = function() {
+		if ( actions.endTurn.isAvailable() ) {
+			// advance structure construction, reset unit moves
+			for (let unit of game.unitList) {
+				if (unit instanceof EngineerSkimmer) {
+					unit.advanceTerraform()
+				}
+				// reset this unit's moves
+				unit.resetMoves()
+			}
+			// advance facility and unit construction
+			for (let city of game.cityList) {
+				//game.active = city // quick and dirty workaround ;)
+				city.build()
+			}
+			game.turn++
+			render()
+			// select next idle unit if no unit selected
+			if (game.active == undefined) {
+				nextIdle()
+			}
+		}
+	}
+
+// disband
+	actions.disband = new Action()
+	actions.disband.name = "Disband"
+	actions.disband.shortcut = "d"
+	actions.disband.isAvailable = function() {
+		if ( game.active instanceof Unit ) {
+			return true
+		}
+		else {
+			return false
+		}
+	}
+	actions.disband.do = function() {
+		if ( actions.disband.isAvailable() ) {
+			// remove unit from tile
+			let tile = game.map.getTileByItemId(game.active.id)
+			tile.units.removeLast(game.active)
+			// remove unit from unitList
+			game.unitList.removeLast(game.active)
+			game.active = undefined
+			render()
+		}
+		else {
+			play(INVALID_COMMAND)
+		}
+	}
+
+// hold
+	actions.hold = new Action()
+	actions.hold.name = "Hold"
+	actions.hold.shortcut = "h"
+	actions.hold.isAvailable = function() {
+		if ( game.active instanceof Unit ) {
+			return true
+		}
+		else {
+			return false
+		}
+	}
+	actions.hold.do = function() {
+		if ( actions.hold.isAvailable() ) {
+			game.active.status = status.hold
+			render()
+		}
+	}
+
+// buildCity
+	actions.buildCity = new Action()
+	actions.buildCity.name = "Build City"
+	actions.buildCity.shortcut = "b"
+		
+	actions.buildCity.isAvailable = function() {
+		if ( game.active instanceof PodSkimmer && game.active.currentMoves > 0 ) {
+			return true
+		}
+		else {
+			return false
+		}
+	}
+	actions.buildCity.do = function() {
+		if ( actions.buildCity.isAvailable() ) {
+			if (game.active.currentMoves >= 1) {
+			let city = new City()
+			city.generateName()
+			// put city on the map
+			let coordinates = game.getActiveCoordinates()
+			let tile = game.map.getTile(coordinates)
+			tile.city = city
+			// remove any structures
+			tile.structures = []
+			game.cityList.push(city)
+			actions.disband.do()
+			render()
+			// open the most recently-created city
+			game.active = game.cityList[game.cityList.length-1]
+			openBaseControl()
+			}
+		}
+		else {
+			play(INVALID_COMMAND)
+		}
+	}
+
 class Game {
 	
+	// list of all possible actions
 	#activePiece
+	
+	constructor() {
+		// cannot initialize active until the map is rendered
+		this.cityNamesList = ["Alpha Prime", "Glorious Awakening", "New Inception", "Terra Nova"]
+		this.nodeMap
+		this.moving = false
+		this.turn = 0
+		this.unitList = []
+		this.cityList = []
+		this.nextId = 0
+		this.turn = 0
+		this.map = new GameMap( MAPSIZE )
+		this.baseControlOpen = false
+		this.productionMenu = [StockpileMinerals, AdministrationNexus, Recycler, BiologyLab, PodSkimmer, ScoutSkimmer, EngineerSkimmer]
+		this.actions = [actions.nextUnit, actions.endTurn]
+		this.structures = [FlotationFarm, SolarArray]
+		// add actions for all structures
+		for (let s of this.structures) {
+			actions[s.shortName] = new Terraform(s)
+		}
+	}
 	
 	set active(piece) {
 		// play default sound if this is a unit that was not previously active
-		if ( this.#activePiece != piece && piece instanceof Unit ) {
+		if ( this.#activePiece !== piece && piece instanceof Unit ) {
 			// play default sound
-			audioPieces.src = piece.sound
-			audioPieces.play()
+			play(piece.sound)
 		}
-		if ( !(this.#activePiece instanceof City) || piece == undefined ) {
-			// do not allow switching active piece if base control is open unless we are closing base control
+		// only change the active piece if base control is not open
+		if ( !game.baseControlOpen && this.#activePiece !== piece ) {
 			this.#activePiece = piece
 			renderActive()
 		}
@@ -64,20 +246,6 @@ class Game {
 		return assignedUnits
 	}
 	
-	constructor() {
-		// cannot initialize active until the map is rendered
-		this.cityNamesList = ["Alpha Prime", "Glorious Awakening", "New Inception", "Terra Nova"]
-		this.nodeMap
-		this.moving = false
-		this.turn = 0
-		this.unitList = []
-		this.cityList = []
-		this.nextId = 0
-		this.turn = 0
-		this.map = new GameMap( MAPSIZE )
-		this.baseControlOpen = false
-		this.productionMenu = [StockpileMinerals, AdministrationNexus, Recycler, BiologyLab, PodSkimmer, ScoutSkimmer, EngineerSkimmer]
-	}
 }
 
 class Tuple {
@@ -272,7 +440,6 @@ class GameMap {
 			
 			ticks++
 			if (ticks === max) {
-				console.log(m)
 				throw new Error("generateNodeGraph exceeded its maximum running time")
 			}
 			
@@ -280,7 +447,6 @@ class GameMap {
 			currentNode.visited = true
 			unvisited.delete(currentNode.coordinates)
 			if ( unvisited.size > Math.pow(game.map.size, 2) ) {
-				console.log(unvisited)
 				throw new Error("Too many nodes")
 				break
 			}
@@ -347,6 +513,7 @@ class Piece {
 		this.name = ""
 		this.id = game.nextId++
 		this.status = status.idle
+		this.actions = []
 	}
 }
 
@@ -398,8 +565,7 @@ class City extends Piece {
 				if (currentProduction instanceof Facility) {
 					this.facilities.push(currentProduction)
 					// play sound
-					audioInterface.src = "sound/cpu prod complete.wav"
-					audioInterface.play()
+					play(PRODUCTION_COMPLETE)
 				}
 				else if (currentProduction instanceof Unit) {
 					// add unit to map, then push to unitList
@@ -407,8 +573,7 @@ class City extends Piece {
 					game.map.getTile(c).units.push(currentProduction)
 					game.unitList.push(currentProduction)
 					// play sound
-					audioInterface.src = "sound/cpu prod complete.wav"
-					audioInterface.play()
+					play(PRODUCTION_COMPLETE)
 				}
 				// remove the finished item
 				this.productionQueue.removeLast(currentProduction)
@@ -663,16 +828,9 @@ class Unit extends Piece {
 		this.maxHealth = 0
 		this.upkeep = 0
 		this.available = true
+		this.actions.push( actions.disband, actions.hold )
 	}
-	disband() {
-		// remove unit from tile
-		let tile = game.map.getTileByItemId(this.id)
-		tile.units.removeLast(this)
-		// remove unit from unitList
-		game.unitList.removeLast(this)
-		game.active = undefined
-		render()
-	}
+	
 	resetMoves() {
 		this.currentMoves = this.maxMoves
 		if (this.status == status.outOfMoves) {
@@ -694,11 +852,6 @@ class Unit extends Piece {
 			}
 			render()
 		}
-	}
-	hold() {
-		// set status
-		this.status = status.hold
-		render()
 	}
 }
 
@@ -731,26 +884,62 @@ class PodSkimmer extends Unit {
 		this.currentHealth = 10
 		this.maxHealth = 10
 		this.sound = "sound/ship.wav"
+		this.actions.push( actions.buildCity )
 	}
-	buildCity = function() {
-		if (this.currentMoves >= 1) {
-			let city = new City()
-			city.generateName()
-			// put city on the map
-			let coordinates = game.getActiveCoordinates()
-			let tile = game.map.getTile(coordinates)
-			tile.city = city
-			// remove any structures
-			tile.structures = []
-			game.cityList.push(city)
-			this.disband()
-			render()
-			// open the most recently-created city
-			game.active = game.cityList[game.cityList.length-1]
-			openBaseControl()
+}
+
+class Terraform extends Action {
+	constructor(structure) {
+		super()
+		this.name = structure.fullName
+		this.shortcut = structure.shortcut
+		this.structure = structure
+		// bind "this" so the function works when attached to an event handler
+		this.do = this.do.bind(this)
+	}
+	
+	isAvailable = function() {
+		if ( game.active instanceof EngineerSkimmer && game.active.currentMoves > 0 && game.structures.includes(this.structure) ) {
+			return true
+		}
+		else if ( game.active.currentMoves <= 0 ) {
+			return false
+		}
+		else if ( !game.structures.includes(this.structure) ) {
+			return false
 		}
 	}
 	
+	do = function() {
+		if ( this.isAvailable() ) {
+			// unit has at least one move left
+			let t = game.getActiveTile()
+			if ( t.structures.find( s => s instanceof this.structure ) != undefined ) {
+				// this structure already exists
+				// play sound
+				play("sound/cpu improved already.wav")
+			}
+			else {
+				// this structure has not yet been built, check if in progress
+				let currentStructure = t.structureQueue.find( s => s instanceof this.structure )
+				if ( currentStructure == undefined ) {
+					// no one has started building this structure
+					currentStructure = new this.structure( game.getActiveCoordinates() )
+					// add new structure to production queue
+					t.structureQueue.push( currentStructure )
+				}
+				// assign this engineer to the structure
+				game.active.assignedTo = currentStructure
+				// update statuses of all units, aggregating engineer-turns
+				game.active.aggregateStatus()
+				// re-render to show engineer status
+				render()
+			}
+		}
+		else {
+			play(INVALID_COMMAND)
+		}
+	}
 }
 
 class EngineerSkimmer extends Unit {
@@ -767,35 +956,7 @@ class EngineerSkimmer extends Unit {
 		this.maxHealth = 10
 		this.assignedTo = undefined
 		this.sound = "sound/ship.wav"
-	}
-	// assign to terraform
-	terraform = function(structure) {
-		if (this.currentMoves > 0) {
-			// unit has at least one move left
-			let t = game.getActiveTile()
-			if ( t.structures.find( s => s instanceof structure ) != undefined ) {
-				// this structure already exists
-				// play sound
-				audioInterface.src = "sound/cpu improved already.wav"
-				audioInterface.play()
-			}
-			else {
-				// this structure has not yet been built, check if in progress
-				let currentStructure = t.structureQueue.find( s => s instanceof structure )
-				if ( currentStructure == undefined ) {
-					// no one has started building this structure
-					currentStructure = new structure( game.getActiveCoordinates() )
-					// add new structure to production queue
-					t.structureQueue.push( currentStructure )
-				}
-				// assign this engineer to the structure
-				this.assignedTo = currentStructure
-				// update statuses of all units, aggregating engineer-turns
-				this.aggregateStatus()
-				// re-render to show engineer status
-				render()
-			}
-		}
+		this.actions = [ new Terraform(FlotationFarm), new Terraform(SolarArray) ]
 	}
 	aggregateStatus = function() {
 		let currentStructure = this.assignedTo
@@ -834,8 +995,7 @@ class EngineerSkimmer extends Unit {
 				// change unit status to idle
 				this.status = status.idle
 				// play sound
-				audioInterface.src = "sound/CPU terraform complete.wav"
-				audioInterface.play()
+				play("sound/CPU terraform complete.wav")
 			}
 			else {
 				// structure is still in progress
@@ -875,7 +1035,7 @@ class FlotationFarm extends Structure {
 	static fullName = "Flotation Farm"
 	static shortName = "flotationFarm"
 	static buildTime = 3
-	static shortcut = "F"
+	static shortcut = "f"
 	constructor() {
 		super()
 	}
@@ -885,7 +1045,7 @@ class SolarArray extends Structure {
 	static fullName = "Solar Array"
 	static shortName = "solarArray"
 	static buildTime = 3
-	static shortcut = "S"
+	static shortcut = "s"
 	constructor() {
 		super()
 	}
@@ -921,22 +1081,6 @@ document.getElementById("closeBaseControl").onclick = closeBaseControl
 // change production
 document.getElementById("productionMenu").onchange = queueProduction
 
-// build city
-document.getElementById("buildCity").onclick = buildCity
-
-// disband unit
-document.getElementById("disband").onclick = disband
-
-document.getElementById("cancelOrders").onclick = cancelOrders
-
-document.getElementById("hold").onclick = hold
-
-document.getElementById("nextIdle").onclick = nextIdle
-
-document.getElementById("buildFarm").onclick = buildFarm
-
-document.getElementById("buildSolar").onclick = buildSolar
-
 document.getElementById("endTurn").onclick = endTurn
 
 function onItemSelect(e) {
@@ -947,6 +1091,7 @@ function onItemSelect(e) {
 }
 
 onkeydown = function(e) {
+	
 	// shortcuts that do not require an active unit
 	switch (e.key) {
 		case "Enter":
@@ -964,21 +1109,22 @@ onkeydown = function(e) {
 				cancelOrders()
 				break
 			case "d":
-				if (game.active.disband !== undefined) {
-					game.active.disband()
-				}
+				actions.disband.do()
 				break
 			case "b":
-				buildCity()
+				actions.buildCity.do()
 				break
 			case "f":
-				buildFarm()
+				actions.flotationFarm.do()
 				break
 			case "s":
-				buildSolar()
+				actions.solarArray.do()
 				break
 			case "h":
-				hold()
+				actions.hold.do()
+				break
+			case "Escape":
+				closeBaseControl()
 				break
 			case "8":
 				// up
@@ -1012,9 +1158,6 @@ onkeydown = function(e) {
 				// up left
 				game.active.moveTo( new Tuple(c.x-1, c.y, c.z) )
 				break
-			case "Escape":
-				closeBaseControl()
-				break
 			default:
 				break;
 		}
@@ -1041,6 +1184,14 @@ function getPieceDom(piece) {
 
 function getUiTileByCoordinates(c) {
 	return document.getElementById(c.x + "," + c.y + "," + c.z)
+}
+
+/* SOUND SYSTEM */
+
+function play(src) {
+	let audioInterface = document.getElementById("audioInterface")
+	audioInterface.src = src
+	audioInterface.play()
 }
 
 /* UI FUNCTIONS */
@@ -1124,8 +1275,7 @@ function openBaseControl() {
 	// show base control screen
 	document.getElementById("baseControl").style.display = "inline-block"
 	// play sound
-	audioInterface.src = "sound/menu2.wav"
-	audioInterface.play()
+	play("sound/menu2.wav")
 }
 
 function closeBaseControl() {
@@ -1134,8 +1284,7 @@ function closeBaseControl() {
 	render()
 	document.getElementById("baseControl").style.display = "none"
 	// play sound
-	audioInterface.src = "sound/menu down.wav"
-	audioInterface.play()
+	play("sound/menu down.wav")
 }
 
 function nextIdle() {
@@ -1156,11 +1305,6 @@ function nextIdle() {
 	}
 }
 
-function hold() {
-	game.active.hold()
-	nextIdle()
-}
-
 function cancelOrders() {
 	if (game.active.status != status.outOfMoves) {
 		game.active.status = status.idle
@@ -1172,52 +1316,6 @@ function buildCity() {
 	// if a piece is selected and this piece can build a city
 	if (game.active !== undefined && game.active.buildCity !== undefined) {
 		game.active.buildCity()
-	}
-}
-
-function buildFarm() {
-	if (game.active instanceof EngineerSkimmer) {
-		game.active.terraform(FlotationFarm)
-		nextIdle()
-	}
-}
-
-function buildSolar() {
-	if (game.active instanceof EngineerSkimmer) {
-		game.active.terraform(SolarArray)
-		nextIdle()
-	}
-}
-
-function disband() {
-	if (game.active.disband !== undefined) {
-		game.active.disband()
-		nextIdle()
-	}
-}
-
-function endTurn() {
-	// do not advance turns while base control is open
-	if ( !(game.active instanceof City) ) {
-		// advance structure construction, reset unit moves
-		for (let unit of game.unitList) {
-			if (unit instanceof EngineerSkimmer) {
-				unit.advanceTerraform()
-			}
-			// reset this unit's moves
-			unit.resetMoves()
-		}
-		// advance facility and unit construction
-		for (let city of game.cityList) {
-			//game.active = city // quick and dirty workaround ;)
-			city.build()
-		}
-		game.turn++
-		render()
-		// select next idle unit if no unit selected
-		if (game.active == undefined) {
-			nextIdle()
-		}
 	}
 }
 
@@ -1313,7 +1411,10 @@ function initialize() {
 }
 
 function renderActive() {
-	if (game.active != undefined) {
+	// render action bar
+	renderActionBar()
+
+	if (game.active !== undefined) {
 		
 		// render active unit DOM element
 		
@@ -1409,82 +1510,32 @@ function renderUnitList() {
 }
 
 function renderActionBar() {
-	console.log(game.active)
 	let actionBar = document.getElementById("actionBar")
-	// hide actions that are not available
-	for (let e of actionBar.children) {
-		switch (e.id) {
-			case "nextIdle":
-				if (game.active !== undefined && game.active instanceof Unit) {
-					e.style.display = ""
-				}
-				else {
-					e.style.display = "none"
-				}
-
-				break
-			case "cancelOrders":
-				if (game.active !== undefined && game.active instanceof Unit) {
-					e.style.display = ""
-				}
-				else {
-					e.style.display = "none"
-				}
-				break
-			case "buildCity":
-				if (game.active !== undefined && game.active.buildCity !== undefined ) {
-					e.style.display = ""
-				}
-				else {
-					e.style.display = "none"
-				}
-				break
-			case "disband":
-				if (game.active !== undefined && game.active instanceof Unit) {
-					e.style.display = ""
-				}
-				else {
-					e.style.display = "none"
-				}
-				break
-			case "hold":
-				if (game.active !== undefined && game.active instanceof Unit) {
-					e.style.display = ""
-				}
-				else {
-					e.style.display = "none"
-				}
-			case "sentry":
-				if (game.active !== undefined && game.active instanceof Unit) {
-					e.style.display = ""
-				}
-				else {
-					e.style.display = "none"
-				}
-				break
-			case "buildFarm":
-				if (game.active !== undefined && game.active instanceof EngineerSkimmer) {
-					e.style.display = ""
-				}
-				else {
-					e.style.display = "none"
-				}
-			case "buildSolar":
-				if (game.active !== undefined && game.active instanceof EngineerSkimmer) {
-					e.style.display = ""
-				}
-				else {
-					e.style.display = "none"
-				}
+	// get all applicable actions
+	let actions = game.actions
+	if ( game.active !== undefined ) {		
+		actions = actions.concat(game.active.actions)
+	}
+	// clear existing actions
+	while (actionBar.firstChild) {
+		actionBar.removeChild(actionBar.firstChild)
+	}
+	// render actions
+	for (let a of actions) {
+		if ( a.isAvailable() ) {
+			let b = document.createElement("button")
+			b.textContent = `${a.name} (${a.shortcut})`
+			b.addEventListener("click", a.do)
+			actionBar.appendChild(b)
 		}
 	}
-	
 }
 
 function render() {
 	let mapDiv = document.getElementById("map")
 	let z = 0;
 	document.getElementById("turn").textContent = game.turn
+	
 	// render map
 	for (let y=0; y<game.map.size; y++) {
 		for (let x=0; x<game.map.size; x++) {
@@ -1562,8 +1613,6 @@ function render() {
 	}
 	// apply active style
 	renderActive()
-	// render action bar
-	renderActionBar()
 	// render unit list
 	renderUnitList()
 }

@@ -20,26 +20,70 @@ TODO
 				
 				}
 			}
-			actions: []
+			actions: [Disband]
 		}
 		class Action: contains function to be executed and logic for when it will be available
-			class CancelOrders extends Action {
-				actionBarIndex: 0
-				shortcut: ""
-				
-				isAvailable() {
-					return false
+		
+		abstract class Action {
+			int actionBarIndex: 0
+			String shortcut: ""
+			
+			bool isAvailable() {
+				return false
+			}
+			void do() {
+				if ( this.isAvailable() ) {
+					// logic here
 				}
-				do() {
-					if ( this.isAvailable() ) {
-						// logic here
-					}
-					else {
-						// play invalid command
-					}
+				else {
+					// play invalid command
 				}
 			}
+		}
+		
+		
+		public static class NextUnit extends Action {
+			int actionBarIndex = 0
+			
+			bool isAvailable() {
+				return true
+			}
+			
+			void do() {
+				if ( this.isAvailable() ) {
+					nextIdle()
+				}
+				else {
+					
+				}
+			}
+		}
+		
+		class Game {
+			actions = [NextUnit]
+		}
+		
+		class Unit extends Piece {
+			class Disband extends Action {
+				boolIsAvailable() {
+					return true
+				}
+			}
+			actions = [Disband]
+		}
+		
+		class EngineerSkimmer extends Piece {
+			class Terraform extends Action {
+				// stuff in here
+			}
+		}
+		actions = actions.push(Terraform)
+		
+		When rendering...
+		First populate the action bar with game actions, then the active unit's actions if they are available.
+		
 		"Invalid command" when button/shortcut not valid
+	Make actions and status static variables on the Game object
 	Rectangular map (Civilization-style shape)
 	When game.moving, hovering over the source tile still shows the last path
 	Show number of moves remaining when using mouse movement
