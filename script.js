@@ -69,7 +69,7 @@ let actions = {}
 	actions.endTurn.actionBarIndex = 0
 	actions.endTurn.isAvailable = function() {
 		if ( !(game.active instanceof City) ) {
-			return false
+			return true
 		}
 		else {
 			return false
@@ -1119,10 +1119,10 @@ onkeydown = function(e) {
 	// shortcuts that do not require an active unit
 	switch (e.key) {
 		case "Enter":
-			endTurn()
+			actions.endTurn.do()
 			break
 		case "w":
-			nextIdle()
+			actions.nextIdle.do()
 			break
 	}
 	if (game.active != undefined) {

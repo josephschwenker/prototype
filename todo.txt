@@ -1,5 +1,4 @@
 TODO
-	Make actions and status variables on the Game object
 	Rectangular map (Civilization-style shape)
 	When game.moving, hovering over the source tile still shows the last path
 	Show number of moves remaining when using mouse movement
@@ -11,6 +10,7 @@ TODO
 	Replace structures array with pointer to a ResourceStructure
 	Bug: "Improvement already exists" instead of "Terraform complete"
 	Should not play open base control sound if base control already open
+	Make actions and status variables on the Game object
 	Switch coordinates to x, y, z instead of z, y, x
 	Structures of different classes can stack: ResourceStructure, MovementStructure, MilitaryStructure, ExtraResourceStructure
 	Convert to model-view-controller (game.renderingPath)
