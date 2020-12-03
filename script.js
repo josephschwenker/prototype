@@ -98,6 +98,30 @@ let actions = {}
 			}
 		}
 	}
+	
+// cancelOrders
+	actions.cancelOrders = new Action()
+	actions.cancelOrders.name = "Cancel Orders"
+	actions.cancelOrders.shortcut = "c"
+	actions.cancelOrders.isAvailable = function() {
+		if ( game.active instanceof Unit ) {
+			if ( game.active.status !== status.idle && game.active.status !== status.outOfMoves ) {
+				return true
+			}
+			else {
+				return false
+			}
+		}
+		else {
+			return false
+		}
+	}
+	actions.cancelOrders.do = function() {
+		if ( actions.cancelOrders.isAvailable() ) {
+			game.active.status = status.idle
+			render()
+		}
+	}
 
 // disband
 	actions.disband = new Action()
@@ -200,7 +224,6 @@ class Game {
 		this.map = new GameMap( MAPSIZE )
 		this.baseControlOpen = false
 		this.productionMenu = [StockpileMinerals, AdministrationNexus, Recycler, BiologyLab, PodSkimmer, ScoutSkimmer, EngineerSkimmer]
-		this.actions = [actions.nextUnit, actions.endTurn]
 		this.structures = [FlotationFarm, SolarArray]
 		// add actions for all structures
 		for (let s of this.structures) {
@@ -513,7 +536,6 @@ class Piece {
 		this.name = ""
 		this.id = game.nextId++
 		this.status = status.idle
-		this.actions = []
 	}
 }
 
@@ -812,8 +834,8 @@ class FacilityStatus extends Status {
 let status = {
 	idle: new Status("idle", undefined, "-"),
 	outOfMoves: new Status("out of moves", undefined, "0"),
-	sentry: new Status("sentrying for enemy units", undefined, "L"),
-	hold: new Status("holding for orders", undefined, "H"),
+	sentry: new Status("sentrying for enemy units", undefined, "l"),
+	hold: new Status("holding for orders", undefined, "h"),
 	noProduction: new NoProduction()
 }
 
@@ -828,7 +850,6 @@ class Unit extends Piece {
 		this.maxHealth = 0
 		this.upkeep = 0
 		this.available = true
-		this.actions.push( actions.disband, actions.hold )
 	}
 	
 	resetMoves() {
@@ -884,7 +905,6 @@ class PodSkimmer extends Unit {
 		this.currentHealth = 10
 		this.maxHealth = 10
 		this.sound = "sound/ship.wav"
-		this.actions.push( actions.buildCity )
 	}
 }
 
@@ -899,13 +919,18 @@ class Terraform extends Action {
 	}
 	
 	isAvailable = function() {
-		if ( game.active instanceof EngineerSkimmer && game.active.currentMoves > 0 && game.structures.includes(this.structure) ) {
-			return true
+		if ( game.active instanceof EngineerSkimmer ) {
+			if ( game.active.currentMoves > 0 && game.structures.includes(this.structure) ) {
+				return true
+			}
+			else if ( game.active.currentMoves <= 0 ) {
+				return false
+			}
+			else if ( !game.structures.includes(this.structure) ) {
+				return false
+			}
 		}
-		else if ( game.active.currentMoves <= 0 ) {
-			return false
-		}
-		else if ( !game.structures.includes(this.structure) ) {
+		else {
 			return false
 		}
 	}
@@ -956,7 +981,6 @@ class EngineerSkimmer extends Unit {
 		this.maxHealth = 10
 		this.assignedTo = undefined
 		this.sound = "sound/ship.wav"
-		this.actions.push( new Terraform(FlotationFarm), new Terraform(SolarArray) )
 	}
 	aggregateStatus = function() {
 		let currentStructure = this.assignedTo
@@ -1106,7 +1130,7 @@ onkeydown = function(e) {
 		let c = game.getActiveCoordinates()
 		switch (e.key) {
 			case "c":
-				cancelOrders()
+				actions.cancelOrders.do()
 				break
 			case "d":
 				actions.disband.do()
@@ -1511,21 +1535,16 @@ function renderUnitList() {
 
 function renderActionBar() {
 	let actionBar = document.getElementById("actionBar")
-	// get all applicable actions
-	let actions = game.actions
-	if ( game.active !== undefined ) {		
-		actions = actions.concat(game.active.actions)
-	}
 	// clear existing actions
 	while (actionBar.firstChild) {
 		actionBar.removeChild(actionBar.firstChild)
 	}
 	// render actions
-	for (let a of actions) {
-		if ( a.isAvailable() ) {
+	for (let a in actions) {
+		if ( actions[a].isAvailable() ) {
 			let b = document.createElement("button")
-			b.textContent = `${a.name} (${a.shortcut})`
-			b.addEventListener("click", a.do)
+			b.textContent = `${actions[a].name} (${actions[a].shortcut})`
+			b.addEventListener("click", actions[a].do)
 			actionBar.appendChild(b)
 		}
 	}
